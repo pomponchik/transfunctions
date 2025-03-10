@@ -1,0 +1,44 @@
+name: Lint
+
+on:
+  push
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+          python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      shell: bash
+      run: pip install -r requirements_dev.txt
+
+    - name: Install the library
+      shell: bash
+      run: pip install .
+
+    - name: Run mypy
+      shell: bash
+      run: mypy transfunctions --strict
+
+    - name: Run mypy for tests
+      shell: bash
+      run: mypy tests
+
+    - name: Run ruff
+      shell: bash
+      run: ruff check transfunctions
+
+    - name: Run ruff for tests
+      shell: bash
+      run: ruff check tests
