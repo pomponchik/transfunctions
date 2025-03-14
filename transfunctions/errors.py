@@ -1,0 +1,2 @@
+class CallTransfunctionDirectlyError(NotImplementedError):
+    pass

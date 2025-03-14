@@ -1,0 +1,1 @@
+from transfunctions.decorator import transfunction
