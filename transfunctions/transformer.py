@@ -1,19 +1,22 @@
 from typing import Optional, Union, List, Any
 from types import FunctionType
 from collections.abc import Callable
-from inspect import isfunction, getsource, getfile
-from ast import parse, NodeTransformer, Expr, AST, AsyncFunctionDef
+from inspect import isfunction, iscoroutinefunction, getsource, getfile
+from ast import parse, NodeTransformer, Expr, AST, AsyncFunctionDef, increment_lineno, Await
 from functools import wraps, update_wrapper
 
-from transfunctions.errors import CallTransfunctionDirectlyError
+from transfunctions.errors import CallTransfunctionDirectlyError, DualUseOfDecoratorError, WrongDecoratorSyntaxError
 
 
 class FunctionTransformer:
-    def __init__(self, function: Callable) -> None:
+    def __init__(self, function: Callable, decorator_lineno: int) -> None:
         if not isfunction(function):
-            raise ValueError()
+            raise ValueError("Only regular or generator functions can be used as a template for @transfunction.")
+        if iscoroutinefunction(function):
+            raise ValueError("Only regular or generator functions can be used as a template for @transfunction. You can't use async functions.")
 
         self.function = function
+        self.decorator_lineno = decorator_lineno
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
         raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
@@ -37,35 +40,93 @@ class FunctionTransformer:
                     )
                 return node
 
-        return self.extract_context('async_context', addictional_transformer=ConvertSyncFunctionToAsync())
+        class ExtractAwaitExpressions(NodeTransformer):
+            def visit_Call(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+                if node.func.id == 'await_it':
+                    return Await(
+                        value=node.args[0],
+                        lineno=node.lineno,
+                        col_offset=node.col_offset,
+                    )
+                return node
+
+
+        return self.extract_context(
+            'async_context',
+            addictional_transformers=[
+                ConvertSyncFunctionToAsync(),
+                ExtractAwaitExpressions(),
+            ],
+        )
 
     def get_generator_function(self):
         return self.extract_context('generator_context')
 
-    def extract_context(self, context_name: str, addictional_transformer: Optional[NodeTransformer] = None):
+    @staticmethod
+    def clear_spaces_from_source_code(source_code: str) -> str:
+        splitted_source_code = source_code.split('\n')
+
+        indent = 0
+        for letter in splitted_source_code[0]:
+            if letter.isspace():
+                indent += 1
+            else:
+                break
+
+        new_splitted_source_code = [x[indent:] for x in splitted_source_code]
+
+        return '\n'.join(new_splitted_source_code)
+
+
+    def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None):
         from ast import dump
         import astunparse
         source_code = getsource(self.function)
-        tree = parse(source_code)
+        converted_source_code = self.clear_spaces_from_source_code(source_code)
+        print(repr(converted_source_code))
+        tree = parse(converted_source_code)
+        original_function = self.function
+        transfunction_decorator = None
 
         class RewriteContexts(NodeTransformer):
             def visit_With(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
-                if len(node.items) == 1 and node.items[0].context_expr.func.id == context_name:
+                if len(node.items) == 1 and node.items[0].context_expr.id == context_name:
                     return node.body
-                elif len(node.items) == 1 and node.items[0].context_expr.func.id != context_name and context_name in ('async_context', 'sync_context', 'generator_context'):
+                elif len(node.items) == 1 and node.items[0].context_expr.id != context_name and context_name in ('async_context', 'sync_context', 'generator_context'):
                     return None
                 return node
 
         class DeleteDecorator(NodeTransformer):
             def visit_FunctionDef(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
-                node.decorator_list = [x for x in node.decorator_list if x.id != 'transfunction']
+                if node.name == original_function.__name__:
+                    nonlocal transfunction_decorator
+                    new_decorator_list = []
+
+                    for decorator in node.decorator_list:
+                        if decorator.id != 'transfunction':
+                            new_decorator_list.append()
+                        else:
+                            if transfunction_decorator is not None:
+                                raise DualUseOfDecoratorError("You cannot use the 'transfunction' decorator twice for the same function.")
+                            transfunction_decorator = decorator
+
+                    node.decorator_list = new_decorator_list
                 return node
+
 
         RewriteContexts().visit(tree)
         DeleteDecorator().visit(tree)
 
-        if addictional_transformer is not None:
-            addictional_transformer.visit(tree)
+        if addictional_transformers is not None:
+            for addictional_transformer in addictional_transformers:
+                addictional_transformer.visit(tree)
+
+        print(astunparse.unparse(tree))
+
+
+        if transfunction_decorator is None:
+            raise WrongDecoratorSyntaxError("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")
+        increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1))
 
         code = compile(tree, filename=getfile(self.function), mode='exec')
         namespace = {}
