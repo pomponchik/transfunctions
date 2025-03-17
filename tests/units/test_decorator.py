@@ -5,7 +5,7 @@ from asyncio import run
 import pytest
 import full_match
 
-from transfunctions import transfunction, CallTransfunctionDirectlyError
+from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError
 from transfunctions.transformer import FunctionTransformer
 from transfunctions import async_context, sync_context, generator_context
 
@@ -13,7 +13,6 @@ from transfunctions import async_context, sync_context, generator_context
 """
 Что нужно проверить:
 
-5. Нельзя использовать декоратор @transfunction без символа @.
 6. Прочие декораторы срабатывают.
 7. Декоратор @transfunction нельзя использовать дважды на одной функции.
 8. Работают замыкания.
@@ -35,6 +34,7 @@ from transfunctions import async_context, sync_context, generator_context
 3. Исключения внутри всех видов функций корректно работают: в трейсбеке отображаются корректные номера строк и корректные строчки кода.
 2. Декоратор работает в базовом случае для обычных, корутинных и генераторных функций. Как с аргументами (позиционными и именованными), так и без.
 4. Нельзя навешивать декоратор на асинк-функции. При попытке это сделать вылетает информативное исключение.
+5. Нельзя использовать декоратор @transfunction без символа @.
 13. В декоратор @transfunction нельзя скормить лямбду или число.
 17. Нельзя вызывать трансформер напрямую. При попытке это сделать вылетает информативное исключение, причем как при передаче аргументов, так и нет.
 """
@@ -287,3 +287,15 @@ def test_traceback_is_working_in_simple_generator_function_with_marker():
 
     assert getsourcelines(make.function)[1] + 3 == certain_traceback[-1].lineno
     assert getsourcelines(make.function)[0][-2].strip() == certain_traceback[-1].line
+
+
+def test_try_to_use_transfunction_decorator_without_at_sign():
+    def function():
+        with generator_context:
+            raise ValueError('message')
+            yield 1
+
+    make = transfunction(function)
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        function = make.get_generator_function()
