@@ -1,4 +1,5 @@
-from inspect import isfunction, iscoroutinefunction, isgeneratorfunction
+import traceback
+from inspect import isfunction, iscoroutinefunction, isgeneratorfunction, getsourcelines
 from asyncio import run
 
 import pytest
@@ -12,10 +13,6 @@ from transfunctions import async_context, sync_context, generator_context
 """
 Что нужно проверить:
 
-1. Декоратор можно использовать с нулевым и с ненулевым индентом.
-2. Декоратор работает для обычных, корутинных и генераторных функций. Как с аргументами (позиционными и именованными), так и без.
-3. Исключения внутри всех видов функций корректно работают: в трейсбеке отображаются корректные номера строк и корректные строчки кода.
-
 5. Нельзя использовать декоратор @transfunction без символа @.
 6. Прочие декораторы срабатывают.
 7. Декоратор @transfunction нельзя использовать дважды на одной функции.
@@ -24,18 +21,21 @@ from transfunctions import async_context, sync_context, generator_context
 10. Работает директива nonlocal.
 11. Работает директива global.
 12. Декоратор @transfunction можно использовать на методах (в т.ч. асинк и генераторных).
-
 14. Все работает с любыми уровнями вложенности (попробовать объявить функцию внутри функции).
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без.
 16. При попытке использовать маркерные контекстные менеджеры со скобками поднимается информативное исключение.
 18. Нельзя навешивать декоратор @transfunction не первым, т.е. не сразу после объявления функции.
 19. При попытке сгенерировать генераторную функцию без "yield" или "yield from" - поднимается исключение.
+20. При попытке сгенерировать обычную функцию, в которой есть "yield" или "yield from" - поднимется исключение.
+21. При попытке сгенерировать асинк функцию, в которой есть "yield from" - поднимется исключение.
 
 Что проверено:
 
-13. В декоратор @transfunction нельзя скормить лямбду или число.
-
+1. Декоратор можно использовать с нулевым и с ненулевым индентом.
+3. Исключения внутри всех видов функций корректно работают: в трейсбеке отображаются корректные номера строк и корректные строчки кода.
+2. Декоратор работает в базовом случае для обычных, корутинных и генераторных функций. Как с аргументами (позиционными и именованными), так и без.
 4. Нельзя навешивать декоратор на асинк-функции. При попытке это сделать вылетает информативное исключение.
+13. В декоратор @transfunction нельзя скормить лямбду или число.
 17. Нельзя вызывать трансформер напрямую. При попытке это сделать вылетает информативное исключение, причем как при передаче аргументов, так и нет.
 """
 
@@ -151,6 +151,11 @@ def test_create_async_function_with_parameters_without_any_markers():
     assert run(function(1, 2, c=3)) == 6
 
 
+def test_try_to_pass_lambda_to_decorator():
+    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @transfunction. Don't use lambdas here.")):
+        transfunction(lambda x: x)
+
+
 def test_create_generator_function_without_any_markers():
     @transfunction
     def generator_maker():
@@ -175,3 +180,110 @@ def test_create_generator_function_with_parameters_without_any_markers():
 
     assert isgeneratorfunction(generator)
     assert [x for x in generator(1, 2, c=3)] == [1, 2, 3]
+
+
+def test_traceback_is_working_in_simple_usual_function():
+    @transfunction
+    def make():
+        raise ValueError('message')
+
+    function = make.get_usual_function()
+
+    try:
+        function()
+        assert False
+    except ValueError as e:
+        certain_traceback = list(traceback.extract_tb(e.__traceback__))
+
+    assert getsourcelines(make.function)[1] + 2 == certain_traceback[-1].lineno
+    assert getsourcelines(make.function)[0][-1].strip() == certain_traceback[-1].line
+
+
+def test_traceback_is_working_in_simple_async_function():
+    @transfunction
+    def make():
+        raise ValueError('message')
+
+    function = make.get_async_function()
+
+    try:
+        run(function())
+        assert False
+    except ValueError as e:
+        certain_traceback = list(traceback.extract_tb(e.__traceback__))
+
+    assert getsourcelines(make.function)[1] + 2 == certain_traceback[-1].lineno
+    assert getsourcelines(make.function)[0][-1].strip() == certain_traceback[-1].line
+
+
+def test_traceback_is_working_in_simple_generator_function():
+    @transfunction
+    def make():
+        raise ValueError('message')
+        yield 1
+
+    function = make.get_generator_function()
+
+    try:
+        [x for x in function()]
+        assert False
+    except ValueError as e:
+        certain_traceback = list(traceback.extract_tb(e.__traceback__))
+
+    assert getsourcelines(make.function)[1] + 2 == certain_traceback[-1].lineno
+    assert getsourcelines(make.function)[0][-2].strip() == certain_traceback[-1].line
+
+
+def test_traceback_is_working_in_usual_function_with_marker():
+    @transfunction
+    def make():
+        with sync_context:
+            raise ValueError('message')
+
+    function = make.get_usual_function()
+
+    try:
+        function()
+        assert False
+    except ValueError as e:
+        certain_traceback = list(traceback.extract_tb(e.__traceback__))
+
+    assert getsourcelines(make.function)[1] + 3 == certain_traceback[-1].lineno
+    assert getsourcelines(make.function)[0][-1].strip() == certain_traceback[-1].line
+
+
+def test_traceback_is_working_in_simple_async_function_with_marker():
+    @transfunction
+    def make():
+        with async_context:
+            raise ValueError('message')
+
+    function = make.get_async_function()
+
+    try:
+        run(function())
+        assert False
+    except ValueError as e:
+        certain_traceback = list(traceback.extract_tb(e.__traceback__))
+
+    assert getsourcelines(make.function)[1] + 3 == certain_traceback[-1].lineno
+    assert getsourcelines(make.function)[0][-1].strip() == certain_traceback[-1].line
+
+
+def test_traceback_is_working_in_simple_generator_function_with_marker():
+    @transfunction
+    def make():
+        with generator_context:
+            raise ValueError('message')
+            yield 1
+
+    function = make.get_generator_function()
+
+    try:
+        [x for x in function()]
+        assert False
+    except ValueError as e:
+        certain_traceback = list(traceback.extract_tb(e.__traceback__))
+
+    assert getsourcelines(make.function)[1] + 3 == certain_traceback[-1].lineno
+    assert getsourcelines(make.function)[0][-2].strip() == certain_traceback[-1].line

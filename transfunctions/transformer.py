@@ -14,12 +14,20 @@ class FunctionTransformer:
             raise ValueError("Only regular or generator functions can be used as a template for @transfunction.")
         if iscoroutinefunction(function):
             raise ValueError("Only regular or generator functions can be used as a template for @transfunction. You can't use async functions.")
+        if self.is_lambda(function):
+            raise ValueError("Only regular or generator functions can be used as a template for @transfunction. Don't use lambdas here.")
 
         self.function = function
         self.decorator_lineno = decorator_lineno
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
         raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
+
+    @staticmethod
+    def is_lambda(function: Callable) -> bool:
+        # https://stackoverflow.com/a/3655857/14522393
+        lambda_example = lambda: 0
+        return isinstance(function, type(lambda_example)) and function.__name__ == lambda_example.__name__
 
     def get_usual_function(self):
         return self.extract_context('sync_context')
