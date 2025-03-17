@@ -88,7 +88,7 @@ class FunctionTransformer:
 
     def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None):
         from ast import dump
-        import astunparse
+        #import astunparse
         source_code = getsource(self.function)
         converted_source_code = self.clear_spaces_from_source_code(source_code)
         print(repr(converted_source_code))
@@ -129,7 +129,7 @@ class FunctionTransformer:
             for addictional_transformer in addictional_transformers:
                 addictional_transformer.visit(tree)
 
-        print(astunparse.unparse(tree))
+        #print(astunparse.unparse(tree))
 
 
         if transfunction_decorator is None:
