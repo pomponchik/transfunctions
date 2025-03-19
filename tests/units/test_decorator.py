@@ -13,7 +13,10 @@ from transfunctions import async_context, sync_context, generator_context
 """
 Что нужно проверить:
 
-6. Прочие декораторы срабатывают.
+6. Нельзя ставить декораторы поверх @transfunction.
+22. Декораторы ниже @transfunction - запрещены (1 фаза).
+21. Декораторы ниже @transfunction работают (2 фаза).
+
 7. Декоратор @transfunction нельзя использовать дважды на одной функции.
 8. Работают замыкания.
 9. Работают чтение глобальных переменных.
@@ -23,10 +26,11 @@ from transfunctions import async_context, sync_context, generator_context
 14. Все работает с любыми уровнями вложенности (попробовать объявить функцию внутри функции).
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без.
 16. При попытке использовать маркерные контекстные менеджеры со скобками поднимается информативное исключение.
-18. Нельзя навешивать декоратор @transfunction не первым, т.е. не сразу после объявления функции.
-19. При попытке сгенерировать генераторную функцию без "yield" или "yield from" - поднимается исключение.
-20. При попытке сгенерировать обычную функцию, в которой есть "yield" или "yield from" - поднимется исключение.
-21. При попытке сгенерировать асинк функцию, в которой есть "yield from" - поднимется исключение.
+18. При попытке сгенерировать генераторную функцию без "yield" или "yield from" - поднимается исключение.
+19. При попытке сгенерировать обычную функцию, в которой есть "yield" или "yield from" - поднимется исключение.
+20. При попытке сгенерировать асинк функцию, в которой есть "yield from" - поднимется исключение.
+22. При подмене имен переменных из списка все продолжает работать: 'transfunction', 'create_async_context', 'create_sync_context', 'create_generator_context', 'await_it'.
+
 
 Что проверено:
 
@@ -299,3 +303,49 @@ def test_try_to_use_transfunction_decorator_without_at_sign():
 
     with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
         function = make.get_generator_function()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#   6. Совместно с @transfunction нельзя использовать прочие декораторы.
+
+
+
+
+
+
+
+
+def test_other_decorators_works_with_usual_function():
+    def other_decorator(function):
+        def wrapper(number):
+            return function(number) + 1
+        return wrapper
+
+    @other_decorator
+    @transfunction
+    def template(number):
+        return number * 2
+
+    function = template.get_usual_function()
+
+    assert function(1) == 3
