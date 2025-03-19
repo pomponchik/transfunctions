@@ -22,9 +22,3 @@ generator_context = create_generator_context()
 
 def await_it(some_expression: Any):
     pass
-
-def yield_it(some_expression: Any):
-    pass
-
-def yield_from_it(some_expression: Any):
-    pass
