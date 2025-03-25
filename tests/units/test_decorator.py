@@ -27,6 +27,7 @@ from transfunctions import async_context, sync_context, generator_context
 19. При попытке сгенерировать обычную функцию, в которой есть "yield" или "yield from" - поднимется исключение.
 20. При попытке сгенерировать асинк функцию, в которой есть "yield from" - поднимется исключение.
 22. При подмене имен переменных из списка все продолжает работать: 'transfunction', 'create_async_context', 'create_sync_context', 'create_generator_context', 'await_it'.
+23. Если использовать 'await_it' вне асинк блока, поднимется исключение.
 
 2 фаза:
 
