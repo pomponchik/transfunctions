@@ -10,12 +10,15 @@ from transfunctions.errors import CallTransfunctionDirectlyError, DualUseOfDecor
 
 class FunctionTransformer:
     def __init__(self, function: Callable, decorator_lineno: int) -> None:
+        if isinstance(function, type(self)):
+            raise DualUseOfDecoratorError("You cannot use the 'transfunction' decorator twice for the same function.")
         if not isfunction(function):
             raise ValueError("Only regular or generator functions can be used as a template for @transfunction.")
         if iscoroutinefunction(function):
             raise ValueError("Only regular or generator functions can be used as a template for @transfunction. You can't use async functions.")
         if self.is_lambda(function):
             raise ValueError("Only regular or generator functions can be used as a template for @transfunction. Don't use lambdas here.")
+
 
         self.function = function
         self.decorator_lineno = decorator_lineno
@@ -91,7 +94,7 @@ class FunctionTransformer:
         #import astunparse
         source_code = getsource(self.function)
         converted_source_code = self.clear_spaces_from_source_code(source_code)
-        print(repr(converted_source_code))
+        #print(repr(converted_source_code))
         tree = parse(converted_source_code)
         original_function = self.function
         transfunction_decorator = None
@@ -108,17 +111,20 @@ class FunctionTransformer:
             def visit_FunctionDef(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
                 if node.name == original_function.__name__:
                     nonlocal transfunction_decorator
-                    new_decorator_list = []
+                    transfunction_decorator = None
+
+                    if not node.decorator_list:
+                        raise WrongDecoratorSyntaxError("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")
 
                     for decorator in node.decorator_list:
                         if decorator.id != 'transfunction':
-                            new_decorator_list.append()
+                            raise WrongDecoratorSyntaxError('The @transfunction decorator cannot be used in conjunction with other decorators.')
                         else:
                             if transfunction_decorator is not None:
                                 raise DualUseOfDecoratorError("You cannot use the 'transfunction' decorator twice for the same function.")
                             transfunction_decorator = decorator
 
-                    node.decorator_list = new_decorator_list
+                    node.decorator_list = []
                 return node
 
 
@@ -131,10 +137,7 @@ class FunctionTransformer:
 
         #print(astunparse.unparse(tree))
 
-
-        if transfunction_decorator is None:
-            raise WrongDecoratorSyntaxError("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")
-        increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1))
+        increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno)) # здесь было transfunction_decorator.lineno - 1
 
         code = compile(tree, filename=getfile(self.function), mode='exec')
         namespace = {}
@@ -146,13 +149,29 @@ class FunctionTransformer:
 
     def rewrite_globals_and_closure(self, function):
         # https://stackoverflow.com/a/13503277/14522393
+        all_new_closure_names = set(self.function.__code__.co_freevars)
+
+        if self.function.__closure__ is not None:
+            old_function_closure_variables = {name: cell for name, cell in zip(self.function.__code__.co_freevars, self.function.__closure__)}
+            filtered_closure = tuple([cell for name, cell in old_function_closure_variables.items() if name in all_new_closure_names])
+            names = tuple([name for name, cell in old_function_closure_variables.items() if name in all_new_closure_names])
+            new_code = function.__code__.replace(co_freevars=names)
+        else:
+            filtered_closure = None
+            new_code = function.__code__
+
+        #print()
+        #print(self.function.__closure__)
+        #print(filtered_closure)
         new_function = FunctionType(
-            function.__code__,
+            new_code,
             self.function.__globals__,
             name=self.function.__name__,
             argdefs=self.function.__defaults__,
-            closure=self.function.__closure__,
+            closure=filtered_closure,
         )
+        #print(new_function.__code__.co_freevars)
+
         new_function = update_wrapper(new_function, function)
         new_function.__kwdefaults__ = function.__kwdefaults__
         return new_function

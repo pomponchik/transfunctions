@@ -5,7 +5,7 @@ from asyncio import run
 import pytest
 import full_match
 
-from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError
+from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError, DualUseOfDecoratorError
 from transfunctions.transformer import FunctionTransformer
 from transfunctions import async_context, sync_context, generator_context
 
@@ -13,11 +13,8 @@ from transfunctions import async_context, sync_context, generator_context
 """
 Что нужно проверить:
 
-6. Нельзя ставить декораторы поверх @transfunction.
-22. Декораторы ниже @transfunction - запрещены (1 фаза).
-21. Декораторы ниже @transfunction работают (2 фаза).
+1 фаза:
 
-7. Декоратор @transfunction нельзя использовать дважды на одной функции.
 8. Работают замыкания.
 9. Работают чтение глобальных переменных.
 10. Работает директива nonlocal.
@@ -31,6 +28,11 @@ from transfunctions import async_context, sync_context, generator_context
 20. При попытке сгенерировать асинк функцию, в которой есть "yield from" - поднимется исключение.
 22. При подмене имен переменных из списка все продолжает работать: 'transfunction', 'create_async_context', 'create_sync_context', 'create_generator_context', 'await_it'.
 
+2 фаза:
+
+6. Нельзя ставить декораторы поверх @transfunction (2 фаза). Реализовывать через поиск через слабые ссылки функций, у которых в .__wrapped__ находится переданная ссылка, рекурсивно. См. https://stackoverflow.com/a/73769181/14522393
+22. Декораторы ниже @transfunction - запрещены (2 фаза).
+21. Декораторы ниже @transfunction работают (2 фаза).
 
 Что проверено:
 
@@ -41,6 +43,7 @@ from transfunctions import async_context, sync_context, generator_context
 5. Нельзя использовать декоратор @transfunction без символа @.
 13. В декоратор @transfunction нельзя скормить лямбду или число.
 17. Нельзя вызывать трансформер напрямую. При попытке это сделать вылетает информативное исключение, причем как при передаче аргументов, так и нет.
+7. Декоратор @transfunction нельзя использовать дважды на одной функции.
 """
 
 @transfunction
@@ -305,47 +308,22 @@ def test_try_to_use_transfunction_decorator_without_at_sign():
         function = make.get_generator_function()
 
 
+def test_double_use_of_decorator():
+    with pytest.raises(DualUseOfDecoratorError, match=full_match("You cannot use the 'transfunction' decorator twice for the same function.")):
+        @transfunction
+        @transfunction
+        def make():
+            pass
 
 
+def test_read_closures_with_usual_function():
+    nonlocal_variable = 1
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#   6. Совместно с @transfunction нельзя использовать прочие декораторы.
-
-
-
-
-
-
-
-
-def test_other_decorators_works_with_usual_function():
-    def other_decorator(function):
-        def wrapper(number):
-            return function(number) + 1
-        return wrapper
-
-    @other_decorator
     @transfunction
-    def template(number):
-        return number * 2
+    def make():
+        #nonlocal nonlocal_variable
+        return nonlocal_variable
 
-    function = template.get_usual_function()
+    function = make.get_usual_function()
 
-    assert function(1) == 3
+    assert function() == 1
