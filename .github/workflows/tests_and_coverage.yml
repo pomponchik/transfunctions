@@ -32,7 +32,9 @@ jobs:
       run: pip list
 
     - name: Run tests and show coverage on the command line
-      run: coverage run --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=90
+      run: |
+        coverage run --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=90
+        coverage xml
 
     - name: Upload reports to codecov
       env:
