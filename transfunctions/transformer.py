@@ -1,3 +1,4 @@
+from sys import version_info
 from typing import Optional, Union, List, Any
 from types import FunctionType
 from collections.abc import Callable
@@ -139,7 +140,10 @@ class FunctionTransformer:
         #import astunparse
         #print(astunparse.unparse(tree))
 
-        increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno)) # здесь было transfunction_decorator.lineno - 1
+        if version_info.minor > 10:
+            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno)) # здесь было transfunction_decorator.lineno - 1
+        else:
+            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1)) # здесь было transfunction_decorator.lineno - 1
 
         code = compile(tree, filename=getfile(self.function), mode='exec')
         namespace = {}

@@ -297,6 +297,7 @@ def test_traceback_is_working_in_simple_generator_function_with_marker():
 
     assert getsourcelines(make.function)[1] + 3 == certain_traceback[-1].lineno
     assert getsourcelines(make.function)[0][-2].strip() == certain_traceback[-1].line
+    assert False
 
 
 def test_try_to_use_transfunction_decorator_without_at_sign():
