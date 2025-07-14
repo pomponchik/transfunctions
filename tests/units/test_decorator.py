@@ -15,8 +15,7 @@ from transfunctions import async_context, sync_context, generator_context
 
 1 фаза:
 
-8. Работают замыкания.
-9. Работают чтение глобальных переменных.
+9. Работает чтение глобальных переменных.
 10. Работает директива nonlocal.
 11. Работает директива global.
 12. Декоратор @transfunction можно использовать на методах (в т.ч. асинк и генераторных).
@@ -45,6 +44,7 @@ from transfunctions import async_context, sync_context, generator_context
 13. В декоратор @transfunction нельзя скормить лямбду или число.
 17. Нельзя вызывать трансформер напрямую. При попытке это сделать вылетает информативное исключение, причем как при передаче аргументов, так и нет.
 7. Декоратор @transfunction нельзя использовать дважды на одной функции.
+8. Работает чтение из замыканий (в том числе для функций с аргументами).
 """
 
 @transfunction
@@ -328,3 +328,71 @@ def test_read_closures_with_usual_function():
     function = make.get_usual_function()
 
     assert function() == 1
+
+
+def test_read_closures_with_usual_function_with_arguments():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make(some_number):
+        #nonlocal nonlocal_variable
+        return nonlocal_variable + some_number
+
+    function = make.get_usual_function()
+
+    assert function(1) == 2
+    assert function(2) == 3
+
+
+def test_read_closures_with_async_function():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make():
+        #nonlocal nonlocal_variable
+        return nonlocal_variable
+
+    function = make.get_async_function()
+
+    assert run(function()) == 1
+
+
+def test_read_closures_with_async_function_with_arguments():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make(some_number):
+        #nonlocal nonlocal_variable
+        return nonlocal_variable + some_number
+
+    function = make.get_async_function()
+
+    assert run(function(1)) == 2
+    assert run(function(2)) == 3
+
+
+def test_read_closures_with_generator_function():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make():
+        #nonlocal nonlocal_variable
+        yield nonlocal_variable
+
+    function = make.get_generator_function()
+
+    assert list(function()) == [1]
+
+
+def test_read_closures_with_generator_function_with_arguments():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make(some_number):
+        #nonlocal nonlocal_variable
+        yield nonlocal_variable + some_number
+
+    function = make.get_generator_function()
+
+    assert list(function(1)) == [2]
+    assert list(function(2)) == [3]

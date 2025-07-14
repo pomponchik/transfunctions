@@ -131,8 +131,6 @@ class FunctionTransformer:
         RewriteContexts().visit(tree)
         DeleteDecorator().visit(tree)
 
-
-
         if addictional_transformers is not None:
             for addictional_transformer in addictional_transformers:
                 addictional_transformer.visit(tree)
