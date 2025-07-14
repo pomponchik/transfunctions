@@ -17,8 +17,7 @@ SOME_GLOBAL = 777
 
 1 фаза:
 
-10. Работает директива nonlocal.
-11. Работает директива global.
+
 12. Декоратор @transfunction можно использовать на методах (в т.ч. асинк и генераторных).
 14. Все работает с любыми уровнями вложенности (попробовать объявить функцию внутри функции).
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без.
@@ -47,6 +46,8 @@ SOME_GLOBAL = 777
 7. Декоратор @transfunction нельзя использовать дважды на одной функции.
 8. Работает чтение из замыканий (в том числе для функций с аргументами).
 9. Работает чтение глобальных переменных.
+10. Работает директива nonlocal.
+11. Работает директива global.
 """
 
 @transfunction
@@ -462,3 +463,187 @@ def test_read_globals_with_generator_function_with_arguments():
 
     assert list(function(1)) == [SOME_GLOBAL + 1]
     assert list(function(2)) == [SOME_GLOBAL + 2]
+
+
+def test_write_nonlocal_variable_from_usual_function_without_arguments():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make():
+        nonlocal nonlocal_variable
+        nonlocal_variable += 1
+
+    function = make.get_usual_function()
+    function()
+
+    assert nonlocal_variable == 2
+
+
+def test_write_nonlocal_variable_from_usual_function_with_arguments():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make(number):
+        nonlocal nonlocal_variable
+        nonlocal_variable += number
+
+    function = make.get_usual_function()
+    function(3)
+
+    assert nonlocal_variable == 4
+
+
+def test_write_nonlocal_variable_from_async_function_without_arguments():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make():
+        nonlocal nonlocal_variable
+        nonlocal_variable += 1
+
+    function = make.get_async_function()
+    run(function())
+
+    assert nonlocal_variable == 2
+
+
+def test_write_nonlocal_variable_from_async_function_with_arguments():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make(number):
+        nonlocal nonlocal_variable
+        nonlocal_variable += number
+
+    function = make.get_async_function()
+    run(function(3))
+
+    assert nonlocal_variable == 4
+
+
+def test_write_nonlocal_variable_from_generator_function_without_arguments():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make():
+        nonlocal nonlocal_variable
+        nonlocal_variable += 1
+        yield nonlocal_variable
+
+    function = make.get_generator_function()
+    list(function())
+
+    assert nonlocal_variable == 2
+
+
+def test_write_nonlocal_variable_from_generator_function_with_arguments():
+    nonlocal_variable = 1
+
+    @transfunction
+    def make(number):
+        nonlocal nonlocal_variable
+        nonlocal_variable += number
+        yield nonlocal_variable
+
+    function = make.get_generator_function()
+    list(function(3))
+
+    assert nonlocal_variable == 4
+
+
+def test_write_global_variable_from_usual_function_without_arguments():
+    @transfunction
+    def make():
+        global SOME_GLOBAL
+        SOME_GLOBAL += 1
+
+    global SOME_GLOBAL
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    function = make.get_usual_function()
+    function()
+
+    assert SOME_GLOBAL == SOME_GLOBAL_BEFORE + 1
+
+    SOME_GLOBAL = SOME_GLOBAL_BEFORE
+
+
+def test_write_global_variable_from_usual_function_with_arguments():
+    @transfunction
+    def make(number):
+        global SOME_GLOBAL
+        SOME_GLOBAL += number
+
+    global SOME_GLOBAL
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    function = make.get_usual_function()
+    function(3)
+
+    assert SOME_GLOBAL == SOME_GLOBAL_BEFORE + 3
+
+    SOME_GLOBAL = SOME_GLOBAL_BEFORE
+
+
+def test_write_global_variable_from_async_function_without_arguments():
+    @transfunction
+    def make():
+        global SOME_GLOBAL
+        SOME_GLOBAL += 1
+
+    global SOME_GLOBAL
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    function = make.get_async_function()
+    run(function())
+
+    assert SOME_GLOBAL == SOME_GLOBAL_BEFORE + 1
+
+    SOME_GLOBAL = SOME_GLOBAL_BEFORE
+
+
+def test_write_global_variable_from_async_function_with_arguments():
+    @transfunction
+    def make(number):
+        global SOME_GLOBAL
+        SOME_GLOBAL += number
+
+    global SOME_GLOBAL
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    function = make.get_async_function()
+    run(function(3))
+
+    assert SOME_GLOBAL == SOME_GLOBAL_BEFORE + 3
+
+    SOME_GLOBAL = SOME_GLOBAL_BEFORE
+
+
+def test_write_global_variable_from_generator_function_without_arguments():
+    @transfunction
+    def make():
+        global SOME_GLOBAL
+        SOME_GLOBAL += 1
+        yield None
+
+    global SOME_GLOBAL
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    function = make.get_generator_function()
+    list(function())
+
+    assert SOME_GLOBAL == SOME_GLOBAL_BEFORE + 1
+
+    SOME_GLOBAL = SOME_GLOBAL_BEFORE
+
+
+def test_write_global_variable_from_generator_function_with_arguments():
+    @transfunction
+    def make(number):
+        global SOME_GLOBAL
+        SOME_GLOBAL += number
+        yield None
+
+    global SOME_GLOBAL
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    function = make.get_generator_function()
+    list(function(3))
+
+    assert SOME_GLOBAL == SOME_GLOBAL_BEFORE + 3
+
+    SOME_GLOBAL = SOME_GLOBAL_BEFORE
