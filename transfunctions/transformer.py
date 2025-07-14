@@ -168,8 +168,6 @@ class FunctionTransformer:
             decorator_list=[],
         )
 
-        Assign(targets=[Name(id='lol', ctx=Store())], value=Constant(value=None))
-
         return tree
 
 
