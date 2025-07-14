@@ -10,12 +10,13 @@ from transfunctions.transformer import FunctionTransformer
 from transfunctions import async_context, sync_context, generator_context
 
 
+SOME_GLOBAL = 777
+
 """
 Что нужно проверить:
 
 1 фаза:
 
-9. Работает чтение глобальных переменных.
 10. Работает директива nonlocal.
 11. Работает директива global.
 12. Декоратор @transfunction можно использовать на методах (в т.ч. асинк и генераторных).
@@ -45,6 +46,7 @@ from transfunctions import async_context, sync_context, generator_context
 17. Нельзя вызывать трансформер напрямую. При попытке это сделать вылетает информативное исключение, причем как при передаче аргументов, так и нет.
 7. Декоратор @transfunction нельзя использовать дважды на одной функции.
 8. Работает чтение из замыканий (в том числе для функций с аргументами).
+9. Работает чтение глобальных переменных.
 """
 
 @transfunction
@@ -396,3 +398,67 @@ def test_read_closures_with_generator_function_with_arguments():
 
     assert list(function(1)) == [2]
     assert list(function(2)) == [3]
+
+
+def test_read_globals_with_usual_function():
+    @transfunction
+    def make():
+        return SOME_GLOBAL
+
+    function = make.get_usual_function()
+
+    assert function() == SOME_GLOBAL
+
+
+def test_read_globals_with_usual_function_with_arguments():
+    @transfunction
+    def make(some_number):
+        #nonlocal nonlocal_variable
+        return SOME_GLOBAL + some_number
+
+    function = make.get_usual_function()
+
+    assert function(1) == SOME_GLOBAL + 1
+    assert function(2) == SOME_GLOBAL + 2
+
+
+def test_read_globals_with_async_function():
+    @transfunction
+    def make():
+        return SOME_GLOBAL
+
+    function = make.get_async_function()
+
+    assert run(function()) == SOME_GLOBAL
+
+
+def test_read_globals_with_async_function_with_arguments():
+    @transfunction
+    def make(some_number):
+        return SOME_GLOBAL + some_number
+
+    function = make.get_async_function()
+
+    assert run(function(1)) == SOME_GLOBAL + 1
+    assert run(function(2)) == SOME_GLOBAL + 2
+
+
+def test_read_globals_with_generator_function():
+    @transfunction
+    def make():
+        yield SOME_GLOBAL
+
+    function = make.get_generator_function()
+
+    assert list(function()) == [SOME_GLOBAL]
+
+
+def test_read_globals_with_generator_function_with_arguments():
+    @transfunction
+    def make(some_number):
+        yield SOME_GLOBAL + some_number
+
+    function = make.get_generator_function()
+
+    assert list(function(1)) == [SOME_GLOBAL + 1]
+    assert list(function(2)) == [SOME_GLOBAL + 2]
