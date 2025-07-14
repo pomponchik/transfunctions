@@ -29,7 +29,7 @@ class FunctionTransformer:
     @staticmethod
     def is_lambda(function: Callable) -> bool:
         # https://stackoverflow.com/a/3655857/14522393
-        lambda_example = lambda: 0
+        lambda_example = lambda: 0  # noqa: E731
         return isinstance(function, type(lambda_example)) and function.__name__ == lambda_example.__name__
 
     def get_usual_function(self):
@@ -90,7 +90,6 @@ class FunctionTransformer:
 
 
     def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None):
-        from ast import dump
         #import astunparse
         source_code = getsource(self.function)
         converted_source_code = self.clear_spaces_from_source_code(source_code)

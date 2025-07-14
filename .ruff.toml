@@ -1,1 +1,1 @@
-ignore = ['E501', 'E712']
+lint.ignore = ['E501', 'E712']
