@@ -20,7 +20,6 @@ class FunctionTransformer:
         if self.is_lambda(function):
             raise ValueError("Only regular or generator functions can be used as a template for @transfunction. Don't use lambdas here.")
 
-
         self.function = function
         self.decorator_lineno = decorator_lineno
 
@@ -164,7 +163,7 @@ class FunctionTransformer:
                 args=[],
                 kwonlyargs=[],
                 kw_defaults=[],
-                defaults=[]
+                defaults=[],
             ),
             decorator_list=[],
         )
