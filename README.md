@@ -2,6 +2,7 @@
 
 [![Downloads](https://static.pepy.tech/badge/transfunctions/month)](https://pepy.tech/project/transfunctions)
 [![Downloads](https://static.pepy.tech/badge/transfunctions)](https://pepy.tech/project/transfunctions)
+[![Coverage Status](https://coveralls.io/repos/github/pomponchik/transfunctions/badge.svg?branch=develop)](https://coveralls.io/github/pomponchik/transfunctions?branch=develop)
 [![Lines of code](https://sloc.xyz/github/pomponchik/transfunctions/?category=code)](https://github.com/boyter/scc/)
 [![Hits-of-Code](https://hitsofcode.com/github/pomponchik/transfunctions?branch=main)](https://hitsofcode.com/github/pomponchik/transfunctions/view?branch=main)
 [![Test-Package](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml)
