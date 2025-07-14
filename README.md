@@ -1,1 +1,68 @@
 # transfunctions
+
+[![Downloads](https://static.pepy.tech/badge/transfunctions/month)](https://pepy.tech/project/transfunctions)
+[![Downloads](https://static.pepy.tech/badge/transfunctions)](https://pepy.tech/project/transfunctions)
+[![Lines of code](https://sloc.xyz/github/pomponchik/transfunctions/?category=code)](https://github.com/boyter/scc/)
+[![Hits-of-Code](https://hitsofcode.com/github/pomponchik/transfunctions?branch=main)](https://hitsofcode.com/github/pomponchik/transfunctions/view?branch=main)
+[![Test-Package](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml)
+[![Python versions](https://img.shields.io/pypi/pyversions/transfunctions.svg)](https://pypi.python.org/pypi/transfunctions)
+[![PyPI version](https://badge.fury.io/py/transfunctions.svg)](https://badge.fury.io/py/transfunctions)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+This library is designed to solve one of the most important problems in python programming - dividing all written code into 2 camps: sync and async. We get rid of code duplication by using templates.
+
+
+## Table of contents
+
+- [**Quick start**](#quick-start)
+
+
+## Quick start
+
+Install it:
+
+```bash
+pip install transfunctions
+```
+
+And use:
+
+```python
+from asyncio import run
+from transfunctions import (
+    transfunction,
+    sync_context,
+    async_context,
+    generator_context,
+)
+
+@transfunction
+def template():
+    print('so, ', end='')
+    with sync_context:
+        print("it's just usual function!")
+    with async_context:
+        print("it's an async function!")
+    with generator_context:
+        print("it's a generator function!")
+        yield
+
+function = template.get_usual_function()
+function()
+#> so, it's just usual function!
+
+async_function = template.get_async_function()
+run(async_function())
+#> so, it's an async function!
+
+generator_function = template.get_generator_function()
+list(generator_function())
+#> so, it's a generator function!
+```
+
+As you can see, in this case, 3 different functions were created based on the template, including both common parts and unique ones for a specific type of function.
+
+You can also quickly try out this and other packages without having to install using [instld](https://github.com/pomponchik/instld).
+
+
+## The problem
