@@ -61,7 +61,6 @@ class FunctionTransformer:
                     )
                 return node
 
-
         return self.extract_context(
             'async_context',
             addictional_transformers=[
