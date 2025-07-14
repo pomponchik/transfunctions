@@ -2,7 +2,7 @@ from typing import Optional, Union, List, Any
 from types import FunctionType
 from collections.abc import Callable
 from inspect import isfunction, iscoroutinefunction, getsource, getfile
-from ast import parse, NodeTransformer, Expr, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Return, Name, Load, Assign, Constant, Store
+from ast import parse, NodeTransformer, Expr, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Return, Name, Load, Assign, Constant, Store, arguments
 from functools import wraps, update_wrapper
 
 from transfunctions.errors import CallTransfunctionDirectlyError, DualUseOfDecoratorError, WrongDecoratorSyntaxError
@@ -160,7 +160,12 @@ class FunctionTransformer:
                 Return(value=Name(id=self.function.__name__, ctx=Load(), col_offset=0), col_offset=0),
             ],
             col_offset=0,
-            args=[],
+            args=arguments(
+                posonlyargs=[],
+                args=[],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[]),
 
         )
 
