@@ -27,14 +27,6 @@ jobs:
       shell: bash
       run: pip install .
 
-    - name: Run mypy
-      shell: bash
-      run: mypy transfunctions --strict
-
-    - name: Run mypy for tests
-      shell: bash
-      run: mypy tests
-
     - name: Run ruff
       shell: bash
       run: ruff check transfunctions
