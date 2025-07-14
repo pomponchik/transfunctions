@@ -165,8 +165,9 @@ class FunctionTransformer:
                 args=[],
                 kwonlyargs=[],
                 kw_defaults=[],
-                defaults=[]),
-
+                defaults=[]
+            ),
+            decorator_list=[],
         )
 
         Assign(targets=[Name(id='lol', ctx=Store())], value=Constant(value=None))
