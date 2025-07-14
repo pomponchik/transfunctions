@@ -2,7 +2,7 @@ from typing import Optional, Union, List, Any
 from types import FunctionType
 from collections.abc import Callable
 from inspect import isfunction, iscoroutinefunction, getsource, getfile
-from ast import parse, NodeTransformer, Expr, AST, AsyncFunctionDef, increment_lineno, Await
+from ast import parse, NodeTransformer, Expr, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Return, Name, Load, Assign, Constant, Store
 from functools import wraps, update_wrapper
 
 from transfunctions.errors import CallTransfunctionDirectlyError, DualUseOfDecoratorError, WrongDecoratorSyntaxError
@@ -131,10 +131,15 @@ class FunctionTransformer:
         RewriteContexts().visit(tree)
         DeleteDecorator().visit(tree)
 
+
+
         if addictional_transformers is not None:
             for addictional_transformer in addictional_transformers:
                 addictional_transformer.visit(tree)
 
+        tree = self.wrap_ast_by_closures(tree)
+
+        #import astunparse
         #print(astunparse.unparse(tree))
 
         increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno)) # здесь было transfunction_decorator.lineno - 1
@@ -142,10 +147,30 @@ class FunctionTransformer:
         code = compile(tree, filename=getfile(self.function), mode='exec')
         namespace = {}
         exec(code, namespace)
-        result = namespace[self.function.__name__]
+        function_factory = namespace['wrapper']
+        result = function_factory()
         result = self.rewrite_globals_and_closure(result)
         result = wraps(self.function)(result)
         return result
+
+    def wrap_ast_by_closures(self, tree):
+        old_functiondef = tree.body[0]
+
+        tree.body[0] = FunctionDef(
+            name='wrapper',
+            body=[Assign(targets=[Name(id=name, ctx=Store(), col_offset=0)], value=Constant(value=None, col_offset=0), col_offset=0) for name in self.function.__code__.co_freevars] + [
+                old_functiondef,
+                Return(value=Name(id=self.function.__name__, ctx=Load(), col_offset=0), col_offset=0),
+            ],
+            col_offset=0,
+            args=[],
+
+        )
+
+        Assign(targets=[Name(id='lol', ctx=Store())], value=Constant(value=None))
+
+        return tree
+
 
     def rewrite_globals_and_closure(self, function):
         # https://stackoverflow.com/a/13503277/14522393
