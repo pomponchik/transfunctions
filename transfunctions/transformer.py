@@ -91,10 +91,8 @@ class FunctionTransformer:
 
 
     def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None):
-        #import astunparse
         source_code = getsource(self.function)
         converted_source_code = self.clear_spaces_from_source_code(source_code)
-        #print(repr(converted_source_code))
         tree = parse(converted_source_code)
         original_function = self.function
         transfunction_decorator = None
@@ -137,13 +135,10 @@ class FunctionTransformer:
 
         tree = self.wrap_ast_by_closures(tree)
 
-        #import astunparse
-        #print(astunparse.unparse(tree))
-
         if version_info.minor > 10:
-            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno)) # здесь было transfunction_decorator.lineno - 1
+            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno))
         else:
-            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1)) # здесь было transfunction_decorator.lineno - 1
+            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1))
 
         code = compile(tree, filename=getfile(self.function), mode='exec')
         namespace = {}
@@ -192,9 +187,6 @@ class FunctionTransformer:
             filtered_closure = None
             new_code = function.__code__
 
-        #print()
-        #print(self.function.__closure__)
-        #print(filtered_closure)
         new_function = FunctionType(
             new_code,
             self.function.__globals__,
@@ -202,7 +194,6 @@ class FunctionTransformer:
             argdefs=self.function.__defaults__,
             closure=filtered_closure,
         )
-        #print(new_function.__code__.co_freevars)
 
         new_function = update_wrapper(new_function, function)
         new_function.__kwdefaults__ = function.__kwdefaults__
