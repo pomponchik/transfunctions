@@ -8,3 +8,4 @@ venv
 build
 .ruff_cache
 .mypy_cache
+.coverage
