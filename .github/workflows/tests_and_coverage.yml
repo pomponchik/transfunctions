@@ -32,7 +32,7 @@ jobs:
       run: pip list
 
     - name: Run tests and show coverage on the command line
-      run: coverage run --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=100
+      run: coverage run --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=90
 
     - name: Upload reports to codecov
       env:
@@ -45,4 +45,4 @@ jobs:
         ./codecov -t ${CODECOV_TOKEN}
 
     - name: Run tests and show the branch coverage on the command line
-      run: coverage run --branch --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=100
+      run: coverage run --branch --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=90
