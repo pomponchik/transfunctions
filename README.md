@@ -2,7 +2,7 @@
 
 [![Downloads](https://static.pepy.tech/badge/transfunctions/month)](https://pepy.tech/project/transfunctions)
 [![Downloads](https://static.pepy.tech/badge/transfunctions)](https://pepy.tech/project/transfunctions)
-[![Coverage Status](https://coveralls.io/repos/github/pomponchik/transfunctions/badge.svg?branch=develop)](https://coveralls.io/github/pomponchik/transfunctions?branch=develop)
+[![Coverage Status](https://coveralls.io/repos/github/pomponchik/transfunctions/badge.svg?branch=main)](https://coveralls.io/github/pomponchik/transfunctions?branch=develop)
 [![Lines of code](https://sloc.xyz/github/pomponchik/transfunctions/?category=code)](https://github.com/boyter/scc/)
 [![Hits-of-Code](https://hitsofcode.com/github/pomponchik/transfunctions?branch=main)](https://hitsofcode.com/github/pomponchik/transfunctions/view?branch=main)
 [![Test-Package](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml)
@@ -68,3 +68,7 @@ You can also quickly try out this and other packages without having to install u
 
 
 ## The problem
+
+Since the `asyncio` module appeared in Python more than 10 years ago, many well-known libraries have received their asynchronous alternates. A lot of the code in the Python ecosystem has been [duplicated](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself). A lot of the code in the Python ecosystem has been duplicated, and you probably know many such examples.
+
+The reason for this problem is that the Python community has chosen a way to implement asynchrony expressed through syntax. There are new keywords in the language, such as `async` and `await`. Their use makes the code so-called "[multicolored](https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/)": all the functions in it can be red or blue, and depending on the color, the rules for calling them are different. You can only call blue functions from red ones, but not vice versa.
