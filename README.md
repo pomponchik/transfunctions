@@ -16,6 +16,7 @@ This library is designed to solve one of the most important problems in python p
 ## Table of contents
 
 - [**Quick start**](#quick-start)
+- [**The problem**](#the-problem)
 
 
 ## Quick start
