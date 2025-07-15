@@ -17,6 +17,7 @@ This library is designed to solve one of the most important problems in python p
 
 - [**Quick start**](#quick-start)
 - [**The problem**](#the-problem)
+- [**Templating**](#templating)
 
 
 ## Quick start
@@ -74,3 +75,6 @@ Since the `asyncio` module appeared in Python more than 10 years ago, many well-
 The reason for this problem is that the Python community has chosen a way to implement asynchrony expressed through syntax. There are new keywords in the language, such as `async` and `await`. Their use makes the code so-called "[multicolored](https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/)": all the functions in it can be red or blue, and depending on the color, the rules for calling them are different. You can only call blue functions from red ones, but not vice versa.
 
 I must say that implementing asynchronous calls using a special syntax is not the only solution. There are languages like Go where runtime can independently determine "under the hood" where a function should be asynchronous and where not, and choose the correct way to call it. A programmer does not need to manually "colorize" their functions there. Personally, I think that choosing a different path is the mistake of the Python community, but that's not what we're discussing here.
+
+
+## Templating
