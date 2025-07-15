@@ -11,10 +11,6 @@ from transfunctions import (
 
 
 def test_quick_start():
-
-
-
-
     @transfunction
     def template():
         print('so, ', end='')
