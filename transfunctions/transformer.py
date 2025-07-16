@@ -123,7 +123,6 @@ class FunctionTransformer:
                     node.decorator_list = []
                 return node
 
-
         RewriteContexts().visit(tree)
         DeleteDecorator().visit(tree)
 
