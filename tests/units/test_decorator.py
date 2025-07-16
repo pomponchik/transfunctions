@@ -17,7 +17,6 @@ SOME_GLOBAL = 777
 
 1 фаза:
 
-12. Декоратор @transfunction можно использовать на методах (в т.ч. асинк и генераторных).
 14. Все работает с любыми уровнями вложенности (попробовать объявить функцию внутри функции).
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без.
 16. При попытке использовать маркерные контекстные менеджеры со скобками поднимается информативное исключение.
@@ -26,13 +25,13 @@ SOME_GLOBAL = 777
 20. При попытке сгенерировать асинк функцию, в которой есть "yield from" - поднимется исключение.
 22. При подмене имен переменных из списка все продолжает работать: 'transfunction', 'create_async_context', 'create_sync_context', 'create_generator_context', 'await_it'.
 23. Если использовать 'await_it' вне асинк блока, поднимется исключение.
-24. Модуль у порождаемых функций такой же, как у шаблона-оригинала.
 
 2 фаза:
 
 6. Нельзя ставить декораторы поверх @transfunction (2 фаза). Реализовывать через поиск через слабые ссылки функций, у которых в .__wrapped__ находится переданная ссылка, рекурсивно. См. https://stackoverflow.com/a/73769181/14522393
 22. Декораторы ниже @transfunction - запрещены (2 фаза).
 21. Декораторы ниже @transfunction работают (2 фаза).
+12. Декоратор @transfunction можно использовать на методах (в т.ч. асинк и генераторных). Пока это не реализовано.
 
 Что проверено:
 
@@ -48,6 +47,7 @@ SOME_GLOBAL = 777
 9. Работает чтение глобальных переменных.
 10. Работает директива nonlocal.
 11. Работает директива global.
+24. Модуль у порождаемых функций такой же, как у шаблона-оригинала.
 """
 
 @transfunction
@@ -647,3 +647,21 @@ def test_write_global_variable_from_generator_function_with_arguments():
     assert SOME_GLOBAL == SOME_GLOBAL_BEFORE + 3
 
     SOME_GLOBAL = SOME_GLOBAL_BEFORE
+
+
+def test_module_name():
+    @transfunction
+    def template():
+        pass
+
+    def usual_function():
+        pass
+
+    generated_functions = (
+        template.get_usual_function(),
+        template.get_async_function(),
+        template.get_generator_function(),
+    )
+
+    for function in generated_functions:
+        assert function.__module__ == usual_function.__module__
