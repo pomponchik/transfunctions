@@ -26,6 +26,7 @@ class FunctionTransformer:
         self.decorator_lineno = decorator_lineno
         self.decorator_name = decorator_name
         self.base_object = None
+        self.cache = {}
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
         raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
@@ -97,6 +98,8 @@ class FunctionTransformer:
 
 
     def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None):
+        if context_name in self.cache:
+            return self.cache[context_name]
         try:
             source_code = getsource(self.function)
         except OSError:
@@ -163,6 +166,8 @@ class FunctionTransformer:
                 result,
                 self.base_object,
             )
+
+        self.cache[context_name] = result
 
         return result
 
