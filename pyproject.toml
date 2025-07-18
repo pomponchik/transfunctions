@@ -11,6 +11,10 @@ authors = [
 description = 'Say NO to Python fragmentation on sync and async'
 readme = "README.md"
 requires-python = ">=3.8"
+dependencies = [
+    'displayhooks>=0.0.4',
+    'dill==^0.4.0',
+]
 classifiers = [
     "Operating System :: OS Independent",
     'Operating System :: MacOS :: MacOS X',
@@ -27,6 +31,7 @@ classifiers = [
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Libraries',
+    'Framework :: AsyncIO',
 ]
 keywords = [
     'async',

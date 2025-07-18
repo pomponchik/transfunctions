@@ -1,4 +1,5 @@
 from transfunctions.decorator import transfunction as transfunction
+from transfunctions.decorators.superfunction import superfunction as superfunction
 
 from transfunctions.markers import (
     async_context as async_context,
