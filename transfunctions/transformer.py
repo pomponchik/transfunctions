@@ -1,6 +1,6 @@
 from sys import version_info
 from typing import Optional, Union, List, Any
-from types import FunctionType
+from types import MethodType, FunctionType
 from collections.abc import Callable
 from inspect import isfunction, iscoroutinefunction, getsource, getfile
 from ast import parse, NodeTransformer, Expr, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Return, Name, Load, Assign, Constant, Store, arguments
@@ -22,9 +22,14 @@ class FunctionTransformer:
 
         self.function = function
         self.decorator_lineno = decorator_lineno
+        self.base_object = None
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
         raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
+
+    def __get__(self, base_object, type=None):
+        self.base_object = base_object
+        return self
 
     @staticmethod
     def is_lambda(function: Callable) -> bool:
@@ -144,6 +149,13 @@ class FunctionTransformer:
         result = function_factory()
         result = self.rewrite_globals_and_closure(result)
         result = wraps(self.function)(result)
+        
+        if self.base_object is not None:
+            result = MethodType(
+                result,
+                self.base_object,
+            )
+
         return result
 
     def wrap_ast_by_closures(self, tree):

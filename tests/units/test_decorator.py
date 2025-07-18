@@ -17,6 +17,7 @@ SOME_GLOBAL = 777
 
 1 фаза:
 
+23. Если использовать 'await_it' вне асинк блока, поднимется исключение.
 14. Все работает с любыми уровнями вложенности (попробовать объявить функцию внутри функции).
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без.
 16. При попытке использовать маркерные контекстные менеджеры со скобками поднимается информативное исключение.
@@ -24,7 +25,6 @@ SOME_GLOBAL = 777
 19. При попытке сгенерировать обычную функцию, в которой есть "yield" или "yield from" - поднимется исключение.
 20. При попытке сгенерировать асинк функцию, в которой есть "yield from" - поднимется исключение.
 22. При подмене имен переменных из списка все продолжает работать: 'transfunction', 'create_async_context', 'create_sync_context', 'create_generator_context', 'await_it'.
-23. Если использовать 'await_it' вне асинк блока, поднимется исключение.
 
 2 фаза:
 
@@ -665,3 +665,81 @@ def test_module_name():
 
     for function in generated_functions:
         assert function.__module__ == usual_function.__module__
+
+
+def test_it_works_with_simple_usual_method():
+    class SomeClass:
+        some_value = 1
+        @transfunction
+        def template(self):
+            return self.some_value + 1
+
+    some_class_instance = SomeClass()
+
+    assert isinstance(some_class_instance.template, FunctionTransformer)
+    assert some_class_instance.template.get_usual_function()() == 2
+
+
+def test_it_works_with_simple_usual_method_with_parameters():
+    class SomeClass:
+        some_value = 1
+        @transfunction
+        def template(self, a, b=5):
+            return self.some_value + 1 + a + b
+
+    some_class_instance = SomeClass()
+
+    assert isinstance(some_class_instance.template, FunctionTransformer)
+    assert some_class_instance.template.get_usual_function()(2) == 9
+
+
+def test_it_works_with_simple_async_method():
+    class SomeClass:
+        some_value = 1
+        @transfunction
+        def template(self):
+            return self.some_value + 1
+
+    some_class_instance = SomeClass()
+
+    assert isinstance(some_class_instance.template, FunctionTransformer)
+    assert run(some_class_instance.template.get_async_function()()) == 2
+
+
+def test_it_works_with_simple_async_method_with_parameters():
+    class SomeClass:
+        some_value = 1
+        @transfunction
+        def template(self, a, b=5):
+            return self.some_value + 1 + a + b
+
+    some_class_instance = SomeClass()
+
+    assert isinstance(some_class_instance.template, FunctionTransformer)
+    assert run(some_class_instance.template.get_async_function()(2)) == 9
+
+
+def test_it_works_with_simple_generator_method():
+    class SomeClass:
+        some_value = 1
+        @transfunction
+        def template(self):
+            yield self.some_value + 1
+
+    some_class_instance = SomeClass()
+
+    assert isinstance(some_class_instance.template, FunctionTransformer)
+    assert list(some_class_instance.template.get_generator_function()()) == [2]
+
+
+def test_it_works_with_simple_generator_method_with_parameters():
+    class SomeClass:
+        some_value = 1
+        @transfunction
+        def template(self, a, b=5):
+            yield self.some_value + 1 + a + b
+
+    some_class_instance = SomeClass()
+
+    assert isinstance(some_class_instance.template, FunctionTransformer)
+    assert list(some_class_instance.template.get_generator_function()(2)) == [9]
