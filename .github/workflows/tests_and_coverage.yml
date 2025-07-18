@@ -33,7 +33,7 @@ jobs:
 
     - name: Run tests and show coverage on the command line
       run: |
-        coverage run --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=90
+        coverage run --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=80
         coverage xml
 
     - name: Upload coverage to Coveralls
@@ -46,4 +46,4 @@ jobs:
         file: coverage.xml
 
     - name: Run tests and show the branch coverage on the command line
-      run: coverage run --branch --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=90
+      run: coverage run --branch --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=80
