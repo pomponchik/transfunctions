@@ -6,10 +6,8 @@ import sys
 import weakref
 
 from functools import wraps
-from typing import Union, Dict, Any
+from typing import Dict, Any
 from collections.abc import Coroutine
-from asyncio import sleep as async_sleep
-from time import sleep as sync_sleep
 
 if sys.version_info <= (3, 10):  # pragma: no cover
     from typing_extensions import TypeAlias
