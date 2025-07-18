@@ -17,7 +17,7 @@ else:  # pragma: no cover
 from displayhooks import not_display
 
 
-if sys.version_info <= (3, 8):  # pragma: no cover
+if sys.version_info <= (3, 9):  # pragma: no cover
     CoroutineClass = Coroutine
 else:  # pragma: no cover
     CoroutineClass: TypeAlias = Coroutine[Any, Any, None]
