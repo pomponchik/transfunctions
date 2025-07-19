@@ -10,9 +10,9 @@ from transfunctions import superfunction, sync_context, async_context, generator
 """
 Что нужно проверить:
 
-
 2. При попытке навесить декоратор @superfunction на функцию с return'ами будет исключение.
 3. Трейсбек исключения с суперфункции при наличии в ней return'а информативен.
+4. Это работает в глобальном скоупе.
 
 Что проверено:
 
