@@ -4,6 +4,17 @@ from contextlib import redirect_stdout
 
 from transfunctions import superfunction, sync_context, async_context
 
+"""
+Что нужно проверить:
+
+1. Все базово работает без аргументов и с аргументами, для обычных, асинк и генераторных функций.
+2. При попытке навесить декоратор @superfunction на функцию с return'ами будет исключение.
+
+Что проверено:
+
+-
+"""
+
 
 def test_just_sync_call():
     @superfunction
