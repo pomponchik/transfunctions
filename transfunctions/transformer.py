@@ -1,30 +1,40 @@
 from sys import version_info
 from typing import Optional, Union, List, Any
-from types import FunctionType
+from types import MethodType, FunctionType
 from collections.abc import Callable
 from inspect import isfunction, iscoroutinefunction, getsource, getfile
 from ast import parse, NodeTransformer, Expr, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Return, Name, Load, Assign, Constant, Store, arguments
 from functools import wraps, update_wrapper
 
+from dill.source import getsource as dill_getsource
+
 from transfunctions.errors import CallTransfunctionDirectlyError, DualUseOfDecoratorError, WrongDecoratorSyntaxError
 
 
 class FunctionTransformer:
-    def __init__(self, function: Callable, decorator_lineno: int) -> None:
+    def __init__(self, function: Callable, decorator_lineno: int, decorator_name: str, extra_transformers: Optional[List[NodeTransformer]] = None) -> None:
         if isinstance(function, type(self)):
-            raise DualUseOfDecoratorError("You cannot use the 'transfunction' decorator twice for the same function.")
+            raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
         if not isfunction(function):
-            raise ValueError("Only regular or generator functions can be used as a template for @transfunction.")
+            raise ValueError(f"Only regular or generator functions can be used as a template for @{decorator_name}.")
         if iscoroutinefunction(function):
-            raise ValueError("Only regular or generator functions can be used as a template for @transfunction. You can't use async functions.")
+            raise ValueError(f"Only regular or generator functions can be used as a template for @{decorator_name}. You can't use async functions.")
         if self.is_lambda(function):
-            raise ValueError("Only regular or generator functions can be used as a template for @transfunction. Don't use lambdas here.")
+            raise ValueError(f"Only regular or generator functions can be used as a template for @{decorator_name}. Don't use lambdas here.")
 
         self.function = function
         self.decorator_lineno = decorator_lineno
+        self.decorator_name = decorator_name
+        self.extra_transformers = extra_transformers
+        self.base_object = None
+        self.cache = {}
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
         raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
+
+    def __get__(self, base_object, type=None):
+        self.base_object = base_object
+        return self
 
     @staticmethod
     def is_lambda(function: Callable) -> bool:
@@ -89,11 +99,24 @@ class FunctionTransformer:
 
 
     def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None):
-        source_code = getsource(self.function)
+        if context_name in self.cache:
+            return self.cache[context_name]
+        try:
+            source_code = getsource(self.function)
+        except OSError:
+            source_code = dill_getsource(self.function)
+
+        if addictional_transformers is None:
+            addictional_transformers = self.extra_transformers
+        else:
+            if self.extra_transformers is not None:
+                addictional_transformers = addictional_transformers + self.extra_transformers
+
         converted_source_code = self.clear_spaces_from_source_code(source_code)
         tree = parse(converted_source_code)
         original_function = self.function
         transfunction_decorator = None
+        decorator_name = self.decorator_name
 
         class RewriteContexts(NodeTransformer):
             def visit_With(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
@@ -110,19 +133,18 @@ class FunctionTransformer:
                     transfunction_decorator = None
 
                     if not node.decorator_list:
-                        raise WrongDecoratorSyntaxError("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")
+                        raise WrongDecoratorSyntaxError(f"The @{decorator_name} decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")
 
                     for decorator in node.decorator_list:
-                        if decorator.id != 'transfunction':
-                            raise WrongDecoratorSyntaxError('The @transfunction decorator cannot be used in conjunction with other decorators.')
+                        if decorator.id != decorator_name:
+                            raise WrongDecoratorSyntaxError(f'The @{decorator_name} decorator cannot be used in conjunction with other decorators.')
                         else:
                             if transfunction_decorator is not None:
-                                raise DualUseOfDecoratorError("You cannot use the 'transfunction' decorator twice for the same function.")
+                                raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
                             transfunction_decorator = decorator
 
                     node.decorator_list = []
                 return node
-
 
         RewriteContexts().visit(tree)
         DeleteDecorator().visit(tree)
@@ -145,6 +167,15 @@ class FunctionTransformer:
         result = function_factory()
         result = self.rewrite_globals_and_closure(result)
         result = wraps(self.function)(result)
+
+        if self.base_object is not None:
+            result = MethodType(
+                result,
+                self.base_object,
+            )
+
+        self.cache[context_name] = result
+
         return result
 
     def wrap_ast_by_closures(self, tree):

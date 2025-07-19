@@ -2,7 +2,7 @@
 
 [![Downloads](https://static.pepy.tech/badge/transfunctions/month)](https://pepy.tech/project/transfunctions)
 [![Downloads](https://static.pepy.tech/badge/transfunctions)](https://pepy.tech/project/transfunctions)
-[![Coverage Status](https://coveralls.io/repos/github/pomponchik/transfunctions/badge.svg?branch=main)](https://coveralls.io/github/pomponchik/transfunctions?branch=develop)
+[![Coverage Status](https://coveralls.io/repos/github/pomponchik/transfunctions/badge.svg?branch=main)](https://coveralls.io/github/pomponchik/transfunctions?branch=main)
 [![Lines of code](https://sloc.xyz/github/pomponchik/transfunctions/?category=code)](https://github.com/boyter/scc/)
 [![Hits-of-Code](https://hitsofcode.com/github/pomponchik/transfunctions?branch=main)](https://hitsofcode.com/github/pomponchik/transfunctions/view?branch=main)
 [![Test-Package](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml)
@@ -17,6 +17,7 @@ This library is designed to solve one of the most important problems in python p
 
 - [**Quick start**](#quick-start)
 - [**The problem**](#the-problem)
+- [**Templating**](#templating)
 
 
 ## Quick start
@@ -74,3 +75,8 @@ Since the `asyncio` module appeared in Python more than 10 years ago, many well-
 The reason for this problem is that the Python community has chosen a way to implement asynchrony expressed through syntax. There are new keywords in the language, such as `async` and `await`. Their use makes the code so-called "[multicolored](https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/)": all the functions in it can be red or blue, and depending on the color, the rules for calling them are different. You can only call blue functions from red ones, but not vice versa.
 
 I must say that implementing asynchronous calls using a special syntax is not the only solution. There are languages like Go where runtime can independently determine "under the hood" where a function should be asynchronous and where not, and choose the correct way to call it. A programmer does not need to manually "colorize" their functions there. Personally, I think that choosing a different path is the mistake of the Python community, but that's not what we're discussing here.
+
+The solution offered by this library is based on templating. You can take a certain function as a template and generate several others based on it: regular, asynchronous, or generator. This allows you to avoid duplicating code where it was previously impossible. And all this without major changes in Python syntax or in the internal structure of the interpreter. We're just "sweeping under the carpet" syntax differences. Combined with the idea of context-aware functions, this makes for an even more powerful tool: `superfunctions`. This allows you to create a single function object that can be handled as you like: as a regular function, as an asynchronous function, or as a generator. The function will behave the way you use it. Thus, this library solves the problem of code duplication caused by the syntactic approach to marking asynchronous execution sections.
+
+
+## Templating
