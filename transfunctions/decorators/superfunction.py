@@ -1,12 +1,9 @@
-from transfunctions.transformer import FunctionTransformer
-from inspect import currentframe
-
-
 import sys
 import weakref
-
+from ast import NodeTransformer, Expr, AST
+from inspect import currentframe
 from functools import wraps
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Union, List
 from collections.abc import Coroutine
 
 if sys.version_info <= (3, 10):  # pragma: no cover
@@ -15,6 +12,9 @@ else:  # pragma: no cover
     from typing import TypeAlias
 
 from displayhooks import not_display
+
+from transfunctions.transformer import FunctionTransformer
+from transfunctions.errors import WrongTransfunctionSyntaxError
 
 
 if sys.version_info <= (3, 9):  # pragma: no cover
@@ -55,7 +55,16 @@ class UsageTracer(CoroutineClass):
 not_display(UsageTracer)
 
 def superfunction(function):
-    transformer = FunctionTransformer(function, currentframe().f_back.f_lineno, 'superfunction')
+    class NoReturns(NodeTransformer):
+        def visit_Return(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+            raise WrongTransfunctionSyntaxError('A superfunction cannot contain a return statement.')
+
+    transformer = FunctionTransformer(
+        function,
+        currentframe().f_back.f_lineno,
+        'superfunction',
+        extra_transformers=[NoReturns()],
+    )
 
     @wraps(function)
     def wrapper(*args, **kwargs):

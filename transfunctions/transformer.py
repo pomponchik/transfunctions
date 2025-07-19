@@ -12,7 +12,7 @@ from transfunctions.errors import CallTransfunctionDirectlyError, DualUseOfDecor
 
 
 class FunctionTransformer:
-    def __init__(self, function: Callable, decorator_lineno: int, decorator_name: str) -> None:
+    def __init__(self, function: Callable, decorator_lineno: int, decorator_name: str, extra_transformers: Optional[List[NodeTransformer]] = None) -> None:
         if isinstance(function, type(self)):
             raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
         if not isfunction(function):
@@ -25,6 +25,7 @@ class FunctionTransformer:
         self.function = function
         self.decorator_lineno = decorator_lineno
         self.decorator_name = decorator_name
+        self.extra_transformers = extra_transformers
         self.base_object = None
         self.cache = {}
 
@@ -104,6 +105,12 @@ class FunctionTransformer:
             source_code = getsource(self.function)
         except OSError:
             source_code = dill_getsource(self.function)
+
+        if addictional_transformers is None:
+            addictional_transformers = self.extra_transformers
+        else:
+            if self.extra_transformers is not None:
+                addictional_transformers = addictional_transformers + self.extra_transformers
 
         converted_source_code = self.clear_spaces_from_source_code(source_code)
         tree = parse(converted_source_code)

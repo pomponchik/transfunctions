@@ -8,3 +8,7 @@ class DualUseOfDecoratorError(SyntaxError):
 
 class WrongDecoratorSyntaxError(SyntaxError):
     pass
+
+
+class WrongTransfunctionSyntaxError(SyntaxError):
+    pass
