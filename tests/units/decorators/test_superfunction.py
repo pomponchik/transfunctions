@@ -120,39 +120,17 @@ def test_just_generator_with_arguments_iteration():
     assert numbers == [1, 2, 3]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def test_superfunction_with_return_nothing_in_common_code_before_specific_blocks_is_raising():
-    import sys
-
-    def new_excepthook(something):
-        raise something.exc_value
-
-    sys.unraisablehook = new_excepthook
-
+def test_tilda_syntax_for_function_call_without_arguments():
     @superfunction
-    def function(a, b):
+    def function():
         return 124
-        with sync_context:
-            print(a)
-        with async_context:
-            print(b)
-        with generator_context:
-            yield from [a, b, 3]
 
-    ~function(1, 2)
+    assert ~function() == 124
 
-    #with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
+
+def test_tilda_syntax_for_function_call_with_arguments():
+    @superfunction
+    def function(a, b, c=4, d=3):
+        return 1 + a + b + c + d
+
+    assert ~function(2, 3, d=5) == 15
