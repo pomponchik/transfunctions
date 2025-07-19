@@ -29,7 +29,7 @@ class UsageTracer(CoroutineClass):
         self.kwargs = kwargs
         self.transformer = transformer
         self.coroutine = self.async_sleep_option(self.flags, args, kwargs, transformer)
-        weakref.finalize(self, self.sync_sleep_option, self.flags, args, kwargs, transformer, self.coroutine)
+        self.finalizer = weakref.finalize(self, self.sync_sleep_option, self.flags, args, kwargs, transformer, self.coroutine)
 
     def __iter__(self):
         self.flags['used'] = True
@@ -40,6 +40,13 @@ class UsageTracer(CoroutineClass):
 
     def __await__(self) -> Any:  # pragma: no cover
         return self.coroutine.__await__()
+
+    def __invert__(self):
+        print(self.finalizer)
+        print(self.finalizer.alive)
+        result = self.finalizer()
+        print('result:', result)
+        return result
 
     def send(self, value: Any) -> Any:
         return self.coroutine.send(value)
@@ -54,7 +61,7 @@ class UsageTracer(CoroutineClass):
     def sync_sleep_option(flags: Dict[str, bool], args, kwargs, transformer, wrapped_coroutine: CoroutineClass) -> None:
         if not flags.get('used', False):
             wrapped_coroutine.close()
-            transformer.get_usual_function()(*args, **kwargs)
+            return transformer.get_usual_function()(*args, **kwargs)
 
     @staticmethod
     async def async_sleep_option(flags: Dict[str, bool], args, kwargs, transformer) -> None:
@@ -73,11 +80,15 @@ def superfunction(function):
         function,
         currentframe().f_back.f_lineno,
         'superfunction',
-        extra_transformers=[NoReturns()],
+        extra_transformers=[
+            #NoReturns(),
+        ],
     )
 
     @wraps(function)
     def wrapper(*args, **kwargs):
         return UsageTracer(args, kwargs, transformer)
+
+    wrapper.__is_superfunction__ = True
 
     return wrapper

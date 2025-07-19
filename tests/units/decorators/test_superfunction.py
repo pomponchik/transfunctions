@@ -2,13 +2,17 @@ import io
 from asyncio import run
 from contextlib import redirect_stdout
 
-from transfunctions import superfunction, sync_context, async_context, generator_context
+import pytest
+import full_match
+
+from transfunctions import superfunction, sync_context, async_context, generator_context, WrongTransfunctionSyntaxError
 
 """
 Что нужно проверить:
 
 
 2. При попытке навесить декоратор @superfunction на функцию с return'ами будет исключение.
+3. Трейсбек исключения с суперфункции при наличии в ней return'а информативен.
 
 Что проверено:
 
@@ -114,3 +118,41 @@ def test_just_generator_with_arguments_iteration():
 
     assert buffer.getvalue() == ""
     assert numbers == [1, 2, 3]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def test_superfunction_with_return_nothing_in_common_code_before_specific_blocks_is_raising():
+    import sys
+
+    def new_excepthook(something):
+        raise something.exc_value
+
+    sys.unraisablehook = new_excepthook
+
+    @superfunction
+    def function(a, b):
+        return 124
+        with sync_context:
+            print(a)
+        with async_context:
+            print(b)
+        with generator_context:
+            yield from [a, b, 3]
+
+    ~function(1, 2)
+
+    #with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
