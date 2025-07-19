@@ -2,6 +2,7 @@ import io
 from asyncio import run
 from contextlib import redirect_stdout
 
+import pytest
 
 from transfunctions import superfunction, sync_context, async_context, generator_context
 
@@ -134,3 +135,21 @@ def test_tilda_syntax_for_function_call_with_arguments():
         return 1 + a + b + c + d
 
     assert ~function(2, 3, d=5) == 15
+
+
+def test_tilda_syntax_for_function_call_without_arguments_raise_exception():
+    @superfunction
+    def function():
+        raise ValueError
+
+    with pytest.raises(ValueError):
+        ~function() == 124
+
+
+def test_tilda_syntax_for_function_call_with_arguments_raise_exception():
+    @superfunction
+    def function(a, b, c=4, d=3):
+        raise ValueError
+
+    with pytest.raises(ValueError):
+        ~function(2, 3, d=5)
