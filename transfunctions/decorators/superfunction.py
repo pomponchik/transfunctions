@@ -32,7 +32,8 @@ class UsageTracer(CoroutineClass):
         weakref.finalize(self, self.sync_sleep_option, self.flags, args, kwargs, transformer, self.coroutine)
 
     def __iter__(self):
-        flags['used'] = True
+        self.flags['used'] = True
+        self.coroutine.close()
         generator_function = self.transformer.get_generator_function()
         generator = generator_function(*(self.args), **(self.kwargs))
         yield from generator
