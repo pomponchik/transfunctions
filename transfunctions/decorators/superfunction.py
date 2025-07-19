@@ -25,8 +25,17 @@ else:  # pragma: no cover
 class UsageTracer(CoroutineClass):
     def __init__(self, args, kwargs, transformer) -> None:
         self.flags: Dict[str, bool] = {}
+        self.args = args
+        self.kwargs = kwargs
+        self.transformer = transformer
         self.coroutine = self.async_sleep_option(self.flags, args, kwargs, transformer)
         weakref.finalize(self, self.sync_sleep_option, self.flags, args, kwargs, transformer, self.coroutine)
+
+    def __iter__(self):
+        flags['used'] = True
+        generator_function = self.transformer.get_generator_function()
+        generator = generator_function(*(self.args), **(self.kwargs))
+        yield from generator
 
     def __await__(self) -> Any:  # pragma: no cover
         return self.coroutine.__await__()
