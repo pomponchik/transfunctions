@@ -76,5 +76,7 @@ The reason for this problem is that the Python community has chosen a way to imp
 
 I must say that implementing asynchronous calls using a special syntax is not the only solution. There are languages like Go where runtime can independently determine "under the hood" where a function should be asynchronous and where not, and choose the correct way to call it. A programmer does not need to manually "colorize" their functions there. Personally, I think that choosing a different path is the mistake of the Python community, but that's not what we're discussing here.
 
+The solution offered by this library is based on templating. You can take a certain function as a template and generate several others based on it: regular, asynchronous, or generator. This allows you to avoid duplicating code where it was previously impossible. And all this without major changes in Python syntax or in the internal structure of the interpreter. We're just "sweeping under the carpet" syntax differences. Combined with the idea of context-aware functions, this makes for an even more powerful tool: `superfunctions`. This allows you to create a single function object that can be handled as you like: as a regular function, as an asynchronous function, or as a generator. The function will behave the way you use it. Thus, this library solves the problem of code duplication caused by the syntactic approach to marking asynchronous execution sections.
+
 
 ## Templating
