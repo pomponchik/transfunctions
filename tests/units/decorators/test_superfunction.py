@@ -2,10 +2,8 @@ import io
 from asyncio import run
 from contextlib import redirect_stdout
 
-import pytest
-import full_match
 
-from transfunctions import superfunction, sync_context, async_context, generator_context, WrongTransfunctionSyntaxError
+from transfunctions import superfunction, sync_context, async_context, generator_context
 
 """
 Что нужно проверить:
