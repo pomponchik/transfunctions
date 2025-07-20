@@ -175,3 +175,33 @@ There is only one known limitation: you cannot use any third-party decorators on
 ## Markers
 
 Objects that we call "markers" are used to mark up specific blocks inside the template function. In the [section above](#code-generation), we have already seen how 3 context managers work: `sync_context`, `async_context`, and `generator_context`. When generating a function with a type corresponding to each of these context managers, the contents of this context manager remain in the generated function, and the contents of the others are cut out.
+
+There is another marker that is used to point to the place where you want to use the `await` keyword, it is called `await_it`. In the generated code, this will be converted into an `await` statement. From the template function, which looks like this:
+
+```python
+from asyncio import sleep
+
+@transfunction
+def template():
+    with async_context:
+        await_it(sleep(5))
+```
+
+... when calling the `get_async_function` method, you will get such an async function:
+
+```python
+async def template():
+    with async_context:
+        await sleep(5)
+```
+
+All markers do not need to be imported in order for the generated code to be functional: they are destroyed during the [code generation](#code-generation). However, you can do this if your linter or syntax checker in your IDE requires it:
+
+```python
+from transfunctions import (
+    sync_context,
+    async_context,
+    generator_context,
+    await_it,
+)
+```
