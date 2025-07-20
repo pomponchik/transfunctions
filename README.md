@@ -17,7 +17,8 @@ This library is designed to solve one of the most important problems in python p
 
 - [**Quick start**](#quick-start)
 - [**The problem**](#the-problem)
-- [**Templating**](#templating)
+- [**Code generation**](#code-generation)
+- [**Markers**](#markers)
 
 
 ## Quick start
@@ -169,3 +170,8 @@ All generated functions:
 - Сan be either ordinary stand-alone functions or bound methods. In the latter case, they will be linked to the same object.
 
 There is only one known limitation: you cannot use any third-party decorators on the template using the decorator syntax, because in some situations this can lead to ambiguous behavior. If you still really need to use a third-party decorator, just generate any of the functions from the template, and then apply your decorator to the result of the generation.
+
+
+## Markers
+
+Objects that we call "markers" are used to mark up specific blocks inside the template function.
