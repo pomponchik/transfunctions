@@ -205,3 +205,15 @@ from transfunctions import (
     await_it,
 )
 ```
+
+Make sure that the generated functions do not include keywords that are not related to this type of function. For example, you cannot generate a regular function using the `get_usual_function` method from such a template:
+
+```python
+from asyncio import sleep
+
+@transfunction
+def template():
+    await_it(sleep(5))
+```
+
+Regular or generator functions cannot use the `await` keyword, so you will get an exception when you try to generate such a function. The same applies to the `yield` and `yield from` keywords. You cannot use them outside of code blocks that relate *only* to generator functions. Please note that not in all such cases, the `transfunctions` library will offer you an informative exception. Here you'd better rely on your own knowledge of `Python` syntax. However, even if such an exception is provided, it will only be raised when trying to generate a function of the type in which this syntax is inappropriate. At the template definition stage, you won't get an exception telling you that something went wrong, because the code generation here is lazy and the code is not analyzed for correctness in any way before you request it.
