@@ -79,4 +79,46 @@ I must say that implementing asynchronous calls using a special syntax is not th
 The solution offered by this library is based on templating. You can take a certain function as a template and generate several others based on it: regular, asynchronous, or generator. This allows you to avoid duplicating code where it was previously impossible. And all this without major changes in Python syntax or in the internal structure of the interpreter. We're just "sweeping under the carpet" syntax differences. Combined with the idea of context-aware functions, this makes for an even more powerful tool: `superfunctions`. This allows you to create a single function object that can be handled as you like: as a regular function, as an asynchronous function, or as a generator. The function will behave the way you use it. Thus, this library solves the problem of code duplication caused by the syntactic approach to marking asynchronous execution sections.
 
 
-## Templating
+## Code generation
+
+This library is based on the idea of [generating code](https://en.wikipedia.org/wiki/Code_generation_(compiler)) at the [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree) level.
+
+Several derivatives can be generated from a single template function. Let's take a simple template function as an example:
+
+```python
+@transfunction
+def template():
+    print('something')
+```
+
+Executing this code will actually return to us not a function, but a special object that can *produce* functions:
+
+```python
+print(template)
+#> <transfunctions.transformer.FunctionTransformer object at 0x105368fa0>
+```
+
+To get a function from this object, you need to call the `get_usual_function` method from it:
+
+```python
+function = template.get_usual_function()
+function()
+#> something
+```
+
+Nothing unusual so far, right? We just defined the function and got it. But! You can also get an async function from this object:
+
+```python
+from asyncio import run
+
+async_function = template.get_async_function()
+run(async_function())
+#> something
+```
+
+That's more interesting. In fact, we transferred all the contents from the original function to the generated async function. The content itself has not changed in any way, that is, we got a function that would look something like this:
+
+```python
+async def template():
+    print('something')
+```
