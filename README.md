@@ -191,8 +191,7 @@ def template():
 
 ```python
 async def template():
-    with async_context:
-        await sleep(5)
+    await sleep(5)
 ```
 
 All markers do not need to be imported in order for the generated code to be functional: they are destroyed during the [code generation](#code-generation). However, you can do this if your linter or syntax checker in your IDE requires it:
