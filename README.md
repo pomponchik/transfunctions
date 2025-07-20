@@ -122,3 +122,18 @@ That's more interesting. In fact, we transferred all the contents from the origi
 async def template():
     print('something')
 ```
+
+But the true power of templating is revealed when we get the opportunity to generate *partially different* functions. Some parts of the template will be reused in all generated versions, while others will be used only in those that relate to a specific type of function. Let's look again at the template example from the ["quick start" section](#quick-start):
+
+```python
+@transfunction
+def template():
+    print('so, ', end='')
+    with sync_context:
+        print("it's just usual function!")
+    with async_context:
+        print("it's an async function!")
+    with generator_context:
+        print("it's a generator function!")
+        yield
+```
