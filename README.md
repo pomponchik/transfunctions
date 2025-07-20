@@ -137,3 +137,35 @@ def template():
         print("it's a generator function!")
         yield
 ```
+
+The `get_usual_function` method will return a function that will contain a common part (the first `print`) and a part highlighted using the context manager as related to ordinary functions. It will look something like this:
+
+```python
+def template():
+    print('so, ', end='')
+    print("it's just usual function!")
+```
+
+The `get_async_function` method will return an async function that looks like this:
+
+```python
+def template():
+    print('so, ', end='')
+    print("it's an async function!")
+```
+
+Finally, method `get_generator_function` will return a generator function that looks like this:
+
+```python
+def template():
+    print('so, ', end='')
+    print("it's a generator function!")
+    yield
+```
+
+All generated functions:
+
+- Inherit the access to global variables and closures that the original template function had.
+- Сan be either ordinary stand-alone functions or bound methods. In the latter case, they will be linked to the same object.
+
+There is only one known limitation: you cannot use any third-party decorators on the template using the decorator syntax, because in some situations this can lead to ambiguous behavior. If you still really need to use a third-party decorator, just generate any of the functions from the template, and then apply your decorator to the result of the generation.
