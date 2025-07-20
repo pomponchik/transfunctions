@@ -174,4 +174,4 @@ There is only one known limitation: you cannot use any third-party decorators on
 
 ## Markers
 
-Objects that we call "markers" are used to mark up specific blocks inside the template function.
+Objects that we call "markers" are used to mark up specific blocks inside the template function. In the [section above](#code-generation), we have already seen how 3 context managers work: `sync_context`, `async_context`, and `generator_context`. When generating a function with a type corresponding to each of these context managers, the contents of this context manager remain in the generated function, and the contents of the others are cut out.
