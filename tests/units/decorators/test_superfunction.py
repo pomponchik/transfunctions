@@ -191,3 +191,14 @@ def test_return_awaited_value_from_async_superfunction_with_arguments():
         return await_it(another_one(a, b, c))
 
     assert run(function(2, b=3)) == 15
+
+
+def test_call_superfunction_with_tilda_multiple_times():
+    @superfunction
+    def function():
+        return 4
+
+    assert ~function() == 4
+    assert ~function() == 4
+    assert ~function() == 4
+    
