@@ -756,7 +756,7 @@ def test_combine_with_other_decorator_before():
     def template():
         pass
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match(f'The @transfunction decorator cannot be used in conjunction with other decorators.')):
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @transfunction decorator cannot be used in conjunction with other decorators.')):
         template.get_usual_function()
 
 
@@ -769,5 +769,5 @@ def test_combine_with_other_decorator_after():
     def template():
         pass
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match(f'The @transfunction decorator cannot be used in conjunction with other decorators.')):
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @transfunction decorator cannot be used in conjunction with other decorators.')):
         template.get_usual_function()
