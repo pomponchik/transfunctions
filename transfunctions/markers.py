@@ -20,5 +20,5 @@ sync_context = create_sync_context()
 generator_context = create_generator_context()
 
 
-def await_it(some_expression: Any):
+def await_it(some_expression: Any) -> Any:
     pass
