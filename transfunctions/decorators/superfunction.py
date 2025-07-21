@@ -42,10 +42,7 @@ class UsageTracer(CoroutineClass):
         return self.coroutine.__await__()
 
     def __invert__(self):
-        print(self.finalizer)
-        print(self.finalizer.alive)
         result = self.finalizer()
-        print('result:', result)
         return result
 
     def send(self, value: Any) -> Any:
