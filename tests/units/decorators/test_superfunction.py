@@ -172,3 +172,22 @@ def test_return_awaited_value_from_async_simple_superfunction():
         return await_it(another_one())
 
     assert run(function()) == 1
+
+
+def test_return_value_from_async_superfunction_with_arguments():
+    @superfunction
+    def function(a, b=5, c=10):
+        return a + b + c
+
+    assert run(function(2, b=3)) == 15
+
+
+def test_return_awaited_value_from_async_superfunction_with_arguments():
+    async def another_one(a, b, c):
+        return a + b + c
+
+    @superfunction
+    def function(a, b=5, c=10):
+        return await_it(another_one(a, b, c))
+
+    assert run(function(2, b=3)) == 15
