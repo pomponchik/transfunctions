@@ -37,6 +37,9 @@ keywords = [
     'async',
     'sync to async',
     'async to sync',
+    'code generation',
+    'ast manipulation',
+    'magic',
 ]
 
 [tool.setuptools.package-data]
