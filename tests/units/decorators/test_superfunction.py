@@ -201,4 +201,23 @@ def test_call_superfunction_with_tilda_multiple_times():
     assert ~function() == 4
     assert ~function() == 4
     assert ~function() == 4
-    
+
+
+def test_async_call_superfunction_multiple_times():
+    @superfunction
+    def function():
+        return 4
+
+    assert run(function()) == 4
+    assert run(function()) == 4
+    assert run(function()) == 4
+
+
+def test_generator_call_superfunction_multiple_times():
+    @superfunction
+    def function():
+        yield 4
+
+    assert list(function()) == [4]
+    assert list(function()) == [4]
+    assert list(function()) == [4]
