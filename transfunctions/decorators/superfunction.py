@@ -68,8 +68,6 @@ class UsageTracer(CoroutineClass):
 
 not_display(UsageTracer)
 
-
-
 def superfunction(function):
     class NoReturns(NodeTransformer):
         def visit_Return(self, node: Return) -> Optional[Union[AST, List[AST]]]:
