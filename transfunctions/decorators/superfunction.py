@@ -1,9 +1,9 @@
 import sys
 import weakref
-from ast import NodeTransformer, Expr, AST
+from ast import NodeTransformer, Return, AST
 from inspect import currentframe
 from functools import wraps
-from typing import Dict, Any, Optional, Union, List, Never
+from typing import Dict, Any, Optional, Union, List
 from collections.abc import Coroutine
 
 if sys.version_info <= (3, 10):  # pragma: no cover
@@ -55,7 +55,7 @@ class UsageTracer(CoroutineClass):
         pass
 
     @staticmethod
-    def sync_sleep_option(flags: Dict[str, bool], args, kwargs, transformer, wrapped_coroutine: CoroutineClass) -> Never:
+    def sync_sleep_option(flags: Dict[str, bool], args, kwargs, transformer, wrapped_coroutine: CoroutineClass) -> None:
         if not flags.get('used', False):
             wrapped_coroutine.close()
             return transformer.get_usual_function()(*args, **kwargs)
@@ -68,9 +68,11 @@ class UsageTracer(CoroutineClass):
 
 not_display(UsageTracer)
 
+
+
 def superfunction(function):
     class NoReturns(NodeTransformer):
-        def visit_Return(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+        def visit_Return(self, node: Return) -> Optional[Union[AST, List[AST]]]:
             raise WrongTransfunctionSyntaxError('A superfunction cannot contain a return statement.')
 
     transformer = FunctionTransformer(
