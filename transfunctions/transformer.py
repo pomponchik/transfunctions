@@ -3,7 +3,7 @@ from typing import Optional, Union, List, Any
 from types import MethodType, FunctionType
 from collections.abc import Callable
 from inspect import isfunction, iscoroutinefunction, getsource, getfile
-from ast import parse, NodeTransformer, Expr, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Return, Name, Load, Assign, Constant, Store, arguments
+from ast import parse, NodeTransformer, Expr, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Call, With, Return, Name, Load, Assign, Constant, Store, arguments
 from functools import wraps, update_wrapper
 
 from dill.source import getsource as dill_getsource
@@ -49,7 +49,7 @@ class FunctionTransformer:
         original_function = self.function
 
         class ConvertSyncFunctionToAsync(NodeTransformer):
-            def visit_FunctionDef(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+            def visit_FunctionDef(self, node: FunctionDef) -> Optional[Union[AST, List[AST]]]:
                 if node.name == original_function.__name__:
                     return AsyncFunctionDef(
                         name=original_function.__name__,
@@ -62,7 +62,7 @@ class FunctionTransformer:
                 return node
 
         class ExtractAwaitExpressions(NodeTransformer):
-            def visit_Call(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+            def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
                 if node.func.id == 'await_it':
                     return Await(
                         value=node.args[0],
@@ -119,7 +119,7 @@ class FunctionTransformer:
         decorator_name = self.decorator_name
 
         class RewriteContexts(NodeTransformer):
-            def visit_With(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+            def visit_With(self, node: With) -> Optional[Union[AST, List[AST]]]:
                 if len(node.items) == 1 and node.items[0].context_expr.id == context_name:
                     return node.body
                 elif len(node.items) == 1 and node.items[0].context_expr.id != context_name and context_name in ('async_context', 'sync_context', 'generator_context'):
