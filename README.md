@@ -19,6 +19,7 @@ This library is designed to solve one of the most important problems in python p
 - [**The problem**](#the-problem)
 - [**Code generation**](#code-generation)
 - [**Markers**](#markers)
+- [**Superfunctions**](#superfunctions)
 
 
 ## Quick start
@@ -216,3 +217,56 @@ def template():
 ```
 
 Regular or generator functions cannot use the `await` keyword, so you will get an exception when you try to generate such a function. The same applies to the `yield` and `yield from` keywords. You cannot use them outside of code blocks that relate *only* to generator functions. Please note that not in all such cases, the `transfunctions` library will offer you an informative exception. Here you'd better rely on your own knowledge of `Python` syntax. However, even if such an exception is provided, it will only be raised when trying to generate a function of the type in which this syntax is inappropriate. At the template definition stage, you won't get an exception telling you that something went wrong, because the code generation here is lazy and the code is not analyzed for correctness in any way before you request it.
+
+
+## Superfunctions
+
+Superfunctions are the most powerful feature of the library. They allow you to completely "put under the hood" all the machinery for selecting the desired type of function based on the template function. The selection is completely automatic.
+
+Let's take a look at the sample code:
+
+```python
+from transfunctions import (
+    superfunction,
+    sync_context,
+    async_context,
+    generator_context,
+    await_it,
+)
+
+@superfunction   # Please note, there's a different decorator here.
+def my_superfunction():
+    print('so, ', end='')
+    with sync_context:
+        print("it's just usual function!")
+    with async_context:
+        print("it's an async function!")
+    with generator_context:
+        print("it's a generator function!")
+        yield
+```
+
+With the `@superfunction` decorator, you no longer need to call special methods for code generation. You can use the resulting function right away, and it will behave differently depending on how you use it.
+
+If you use it as a regular function, a regular function will be created "under the hood" based on the template and then called:
+
+```python
+my_superfunction()
+#> so, it's just usual function!
+```
+
+If you use `asyncio.run` or the `await` keyword when calling, the async version of the function will be automatically generated and called:
+
+```python
+from asyncio import run
+
+run(my_superfunction())
+#> so, it's an async function!
+```
+
+And finally, if you try to iterate through the result of calling this function, it turns out that it behaves like a generator function:
+
+```python
+list(my_superfunction())
+#> so, it's a generator function!
+```
