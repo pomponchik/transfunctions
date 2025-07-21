@@ -83,7 +83,7 @@ def superfunction(function):
     )
 
     @wraps(function)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: , **kwargs):
         return UsageTracer(args, kwargs, transformer)
 
     wrapper.__is_superfunction__ = True
