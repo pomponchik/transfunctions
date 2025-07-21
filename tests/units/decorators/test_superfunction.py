@@ -3,8 +3,9 @@ from asyncio import run
 from contextlib import redirect_stdout
 
 import pytest
+import full_match
 
-from transfunctions import superfunction, sync_context, async_context, generator_context
+from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, WrongDecoratorSyntaxError
 
 """
 Что нужно проверить:
@@ -153,3 +154,97 @@ def test_tilda_syntax_for_function_call_with_arguments_raise_exception():
 
     with pytest.raises(ValueError):
         ~function(2, 3, d=5)
+
+
+def test_return_value_from_async_simple_superfunction():
+    @superfunction
+    def function():
+        return 1
+
+    assert run(function()) == 1
+
+
+def test_return_awaited_value_from_async_simple_superfunction():
+    async def another_one():
+        return 1
+
+    @superfunction
+    def function():
+        return await_it(another_one())
+
+    assert run(function()) == 1
+
+
+def test_return_value_from_async_superfunction_with_arguments():
+    @superfunction
+    def function(a, b=5, c=10):
+        return a + b + c
+
+    assert run(function(2, b=3)) == 15
+
+
+def test_return_awaited_value_from_async_superfunction_with_arguments():
+    async def another_one(a, b, c):
+        return a + b + c
+
+    @superfunction
+    def function(a, b=5, c=10):
+        return await_it(another_one(a, b, c))
+
+    assert run(function(2, b=3)) == 15
+
+
+def test_call_superfunction_with_tilda_multiple_times():
+    @superfunction
+    def function():
+        return 4
+
+    assert ~function() == 4
+    assert ~function() == 4
+    assert ~function() == 4
+
+
+def test_async_call_superfunction_multiple_times():
+    @superfunction
+    def function():
+        return 4
+
+    assert run(function()) == 4
+    assert run(function()) == 4
+    assert run(function()) == 4
+
+
+def test_generator_call_superfunction_multiple_times():
+    @superfunction
+    def function():
+        yield 4
+
+    assert list(function()) == [4]
+    assert list(function()) == [4]
+    assert list(function()) == [4]
+
+
+def test_combine_with_other_decorator_before():
+    def other_decorator(function):
+        return function
+
+    @superfunction
+    @other_decorator
+    def template():
+        pass
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @superfunction decorator cannot be used in conjunction with other decorators.')):
+        ~template()
+
+
+def test_combine_with_other_decorator_after():
+    def other_decorator(function):
+        return function
+
+    @other_decorator
+    @superfunction
+    def template():
+        pass
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @superfunction decorator cannot be used in conjunction with other decorators.')):
+        ~template()
