@@ -3,7 +3,7 @@ import weakref
 from ast import NodeTransformer, Expr, AST
 from inspect import currentframe
 from functools import wraps
-from typing import Dict, Any, Optional, Union, List
+from typing import Dict, Any, Optional, Union, List, Never
 from collections.abc import Coroutine
 
 if sys.version_info <= (3, 10):  # pragma: no cover
@@ -58,7 +58,7 @@ class UsageTracer(CoroutineClass):
         pass
 
     @staticmethod
-    def sync_sleep_option(flags: Dict[str, bool], args, kwargs, transformer, wrapped_coroutine: CoroutineClass) -> None:
+    def sync_sleep_option(flags: Dict[str, bool], args, kwargs, transformer, wrapped_coroutine: CoroutineClass) -> Never:
         if not flags.get('used', False):
             wrapped_coroutine.close()
             return transformer.get_usual_function()(*args, **kwargs)
