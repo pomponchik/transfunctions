@@ -175,7 +175,7 @@ There is only one known limitation: you cannot use any third-party decorators on
 
 ## Markers
 
-Objects that we call "markers" are used to mark up specific blocks inside the template function. In the [section above](#code-generation), we have already seen how 3 context managers work: `sync_context`, `async_context`, and `generator_context`. When generating a function with a type corresponding to each of these context managers, the contents of this context manager remain in the generated function, and the others with their contents are cut out.
+Objects that we call "markers" are used to mark up specific blocks inside the template function. In the [section above](#code-generation), we have already seen how 3 context managers work: `sync_context`, `async_context`, and `generator_context`; all of them are markers. When generating a function with a type corresponding to each of these context managers, the contents of this context manager remain in the generated function, and the others with their contents are cut out.
 
 There is another marker that is used to point to the place where you want to use the `await` keyword, it is called `await_it`. In the generated code, this will be converted into an `await` statement. From the template function, which looks like this:
 
