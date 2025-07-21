@@ -63,7 +63,7 @@ class UsageTracer(CoroutineClass):
     @staticmethod
     async def async_sleep_option(flags: Dict[str, bool], args, kwargs, transformer) -> None:
         flags['used'] = True
-        await transformer.get_async_function()(*args, **kwargs)
+        return await transformer.get_async_function()(*args, **kwargs)
 
 
 not_display(UsageTracer)

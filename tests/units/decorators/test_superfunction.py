@@ -153,3 +153,11 @@ def test_tilda_syntax_for_function_call_with_arguments_raise_exception():
 
     with pytest.raises(ValueError):
         ~function(2, 3, d=5)
+
+
+def test_return_value_from_async_simple_superfunction():
+    @superfunction
+    def function():
+        return 1
+
+    assert run(function()) == 1
