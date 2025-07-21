@@ -270,3 +270,18 @@ And finally, if you try to iterate through the result of calling this function, 
 list(my_superfunction())
 #> so, it's a generator function!
 ```
+
+How does it work? In fact, `my_superfunction` returns some kind of intermediate object that can be both a coroutine and a generator and an ordinary function. Depending on how it is handled, it lazily code-generates the desired version of the function from a given template and uses it.
+
+Separately, it is worth considering how the superfunction works in the normal function mode. The point is that we need to somehow distinguish a call wrapped with an `await` statement or iteration from a call in which we use a function as a regular function. To do this, a special trick is used by default: assigning a finalizer to reset the reference counter to a variable. When the reference count is zero, the normal (synchronous) implementation of the function is automatically called. However, this imposes 2 restrictions:
+
+- You cannot use the return values from this function in any way. This works in the coroutine function mode, but not in the regular mode. If you try to save the result of a function call to a variable, the reference counter to the returned object will not reset while this variable exists, and accordingly the function will not actually be called.
+- Exceptions will not work normally inside this function. Rather, they can be picked up and intercepted in [`sys.unraisablehook`](https://docs.python.org/3/library/sys.html#sys.unraisablehook), but they will not go up the stack above this function. This is due to a feature of CPython: exceptions that occur inside callbacks for finalizing objects are completely escaped.
+
+To get around both of these problems, you can use a special syntactic trick: put the `~` symbol before calling the function. Like this:
+
+```python
+~my_superfunction()
+```
+
+In this case, the behavior of the superfunction will be completely indistinguishable from the behavior of a regular function. Return expressions and exceptions will work exactly as you expect them to.
