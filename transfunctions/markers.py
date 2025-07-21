@@ -4,15 +4,15 @@ from contextlib import contextmanager
 
 @contextmanager
 def create_async_context():
-    yield
+    yield  # pragma: no cover
 
 @contextmanager
 def create_sync_context():
-    yield
+    yield  # pragma: no cover
 
 @contextmanager
 def create_generator_context():
-    yield
+    yield  # pragma: no cover
 
 
 async_context = create_async_context()
