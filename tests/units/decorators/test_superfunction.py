@@ -4,7 +4,7 @@ from contextlib import redirect_stdout
 
 import pytest
 
-from transfunctions import superfunction, sync_context, async_context, generator_context
+from transfunctions import superfunction, sync_context, async_context, generator_context, await_it
 
 """
 Что нужно проверить:
@@ -159,5 +159,16 @@ def test_return_value_from_async_simple_superfunction():
     @superfunction
     def function():
         return 1
+
+    assert run(function()) == 1
+
+
+def test_return_awaited_value_from_async_simple_superfunction():
+    async def another_one():
+        return 1
+
+    @superfunction
+    def function():
+        return await_it(another_one())
 
     assert run(function()) == 1
