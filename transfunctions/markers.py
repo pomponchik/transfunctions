@@ -1,18 +1,18 @@
-from typing import Any
+from typing import Any, NoReturn, Generator
 from contextlib import contextmanager
 
 
 @contextmanager
-def create_async_context():
-    yield  # pragma: no cover
+def create_async_context() -> Generator[NoReturn, None, None]:
+    yield  # type: ignore[misc]  # pragma: no cover
 
 @contextmanager
-def create_sync_context():
-    yield  # pragma: no cover
+def create_sync_context() -> Generator[NoReturn, None, None]:
+    yield  # type: ignore[misc]  # pragma: no cover
 
 @contextmanager
-def create_generator_context():
-    yield  # pragma: no cover
+def create_generator_context() -> Generator[NoReturn, None, None]:
+    yield  # type: ignore[misc]  # pragma: no cover
 
 
 async_context = create_async_context()
@@ -21,4 +21,4 @@ generator_context = create_generator_context()
 
 
 def await_it(some_expression: Any) -> Any:
-    pass
+    pass   # pragma: no cover
