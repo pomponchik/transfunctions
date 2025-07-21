@@ -1,12 +1,12 @@
 from sys import version_info
-from typing import Optional, Union, List, Any
+from typing import Optional, Union, List, Dict, Any
 from types import MethodType, FunctionType
 from collections.abc import Callable
 from inspect import isfunction, iscoroutinefunction, getsource, getfile
-from ast import parse, NodeTransformer, Expr, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Return, Name, Load, Assign, Constant, Store, arguments
+from ast import parse, NodeTransformer, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Call, With, Return, Name, Load, Assign, Constant, Store, arguments
 from functools import wraps, update_wrapper
 
-from dill.source import getsource as dill_getsource
+from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
 
 from transfunctions.errors import CallTransfunctionDirectlyError, DualUseOfDecoratorError, WrongDecoratorSyntaxError
 
@@ -27,7 +27,7 @@ class FunctionTransformer:
         self.decorator_name = decorator_name
         self.extra_transformers = extra_transformers
         self.base_object = None
-        self.cache = {}
+        self.cache: Dict[str, Callable] = {}
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
         raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
@@ -49,7 +49,7 @@ class FunctionTransformer:
         original_function = self.function
 
         class ConvertSyncFunctionToAsync(NodeTransformer):
-            def visit_FunctionDef(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+            def visit_FunctionDef(self, node: FunctionDef) -> Optional[Union[AST, List[AST]]]:
                 if node.name == original_function.__name__:
                     return AsyncFunctionDef(
                         name=original_function.__name__,
@@ -62,7 +62,7 @@ class FunctionTransformer:
                 return node
 
         class ExtractAwaitExpressions(NodeTransformer):
-            def visit_Call(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+            def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
                 if node.func.id == 'await_it':
                     return Await(
                         value=node.args[0],
@@ -102,7 +102,7 @@ class FunctionTransformer:
         if context_name in self.cache:
             return self.cache[context_name]
         try:
-            source_code = getsource(self.function)
+            source_code: str = getsource(self.function)
         except OSError:
             source_code = dill_getsource(self.function)
 
@@ -119,7 +119,7 @@ class FunctionTransformer:
         decorator_name = self.decorator_name
 
         class RewriteContexts(NodeTransformer):
-            def visit_With(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+            def visit_With(self, node: With) -> Optional[Union[AST, List[AST]]]:
                 if len(node.items) == 1 and node.items[0].context_expr.id == context_name:
                     return node.body
                 elif len(node.items) == 1 and node.items[0].context_expr.id != context_name and context_name in ('async_context', 'sync_context', 'generator_context'):
@@ -127,7 +127,7 @@ class FunctionTransformer:
                 return node
 
         class DeleteDecorator(NodeTransformer):
-            def visit_FunctionDef(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+            def visit_FunctionDef(self, node: FunctionDef) -> Optional[Union[AST, List[AST]]]:
                 if node.name == original_function.__name__:
                     nonlocal transfunction_decorator
                     transfunction_decorator = None
@@ -161,7 +161,7 @@ class FunctionTransformer:
             increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1))
 
         code = compile(tree, filename=getfile(self.function), mode='exec')
-        namespace = {}
+        namespace: Dict[str, Callable] = {}
         exec(code, namespace)
         function_factory = namespace['wrapper']
         result = function_factory()

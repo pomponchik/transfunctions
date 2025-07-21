@@ -1,6 +1,6 @@
 import sys
 import weakref
-from ast import NodeTransformer, Expr, AST
+from ast import NodeTransformer, Return, AST
 from inspect import currentframe
 from functools import wraps
 from typing import Dict, Any, Optional, Union, List
@@ -42,10 +42,7 @@ class UsageTracer(CoroutineClass):
         return self.coroutine.__await__()
 
     def __invert__(self):
-        print(self.finalizer)
-        print(self.finalizer.alive)
         result = self.finalizer()
-        print('result:', result)
         return result
 
     def send(self, value: Any) -> Any:
@@ -73,7 +70,7 @@ not_display(UsageTracer)
 
 def superfunction(function):
     class NoReturns(NodeTransformer):
-        def visit_Return(self, node: Expr) -> Optional[Union[AST, List[AST]]]:
+        def visit_Return(self, node: Return) -> Optional[Union[AST, List[AST]]]:
             raise WrongTransfunctionSyntaxError('A superfunction cannot contain a return statement.')
 
     transformer = FunctionTransformer(

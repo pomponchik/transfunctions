@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transfunctions"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
   { name="Evgeniy Blinov", email="zheni-b@yandex.ru" },
 ]
@@ -14,6 +14,7 @@ requires-python = ">=3.8"
 dependencies = [
     'displayhooks>=0.0.4',
     'dill==0.4.0',
+    'typing_extensions ; python_version <= "3.10"',
 ]
 classifiers = [
     "Operating System :: OS Independent",
@@ -37,6 +38,9 @@ keywords = [
     'async',
     'sync to async',
     'async to sync',
+    'code generation',
+    'ast manipulation',
+    'magic',
 ]
 
 [tool.setuptools.package-data]
