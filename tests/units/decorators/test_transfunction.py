@@ -745,3 +745,29 @@ def test_it_works_with_simple_generator_method_with_parameters():
 
     assert isinstance(some_class_instance.template, FunctionTransformer)
     assert list(some_class_instance.template.get_generator_function()(2)) == [9]
+
+
+def test_combine_with_other_decorator_before():
+    def other_decorator(function):
+        return function
+
+    @transfunction
+    @other_decorator
+    def template():
+        pass
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match(f'The @transfunction decorator cannot be used in conjunction with other decorators.')):
+        template.get_usual_function()
+
+
+def test_combine_with_other_decorator_after():
+    def other_decorator(function):
+        return function
+
+    @other_decorator
+    @transfunction
+    def template():
+        pass
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match(f'The @transfunction decorator cannot be used in conjunction with other decorators.')):
+        template.get_usual_function()

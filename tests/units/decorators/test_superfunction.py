@@ -3,8 +3,9 @@ from asyncio import run
 from contextlib import redirect_stdout
 
 import pytest
+import full_match
 
-from transfunctions import superfunction, sync_context, async_context, generator_context, await_it
+from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, WrongDecoratorSyntaxError
 
 """
 Что нужно проверить:
@@ -221,3 +222,29 @@ def test_generator_call_superfunction_multiple_times():
     assert list(function()) == [4]
     assert list(function()) == [4]
     assert list(function()) == [4]
+
+
+def test_combine_with_other_decorator_before():
+    def other_decorator(function):
+        return function
+
+    @superfunction
+    @other_decorator
+    def template():
+        pass
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match(f'The @superfunction decorator cannot be used in conjunction with other decorators.')):
+        ~template()
+
+
+def test_combine_with_other_decorator_after():
+    def other_decorator(function):
+        return function
+
+    @other_decorator
+    @superfunction
+    def template():
+        pass
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match(f'The @superfunction decorator cannot be used in conjunction with other decorators.')):
+        ~template()
