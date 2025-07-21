@@ -1,4 +1,5 @@
-from transfunctions.decorator import transfunction as transfunction
+from transfunctions.decorators.transfunction import transfunction as transfunction
+from transfunctions.decorators.superfunction import superfunction as superfunction
 
 from transfunctions.markers import (
     async_context as async_context,
@@ -11,4 +12,5 @@ from transfunctions.errors import (
     CallTransfunctionDirectlyError as CallTransfunctionDirectlyError,
     DualUseOfDecoratorError as DualUseOfDecoratorError,
     WrongDecoratorSyntaxError as WrongDecoratorSyntaxError,
+    WrongTransfunctionSyntaxError as WrongTransfunctionSyntaxError,
 )
