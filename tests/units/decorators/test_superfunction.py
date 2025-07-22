@@ -1,6 +1,7 @@
 import io
+import sys
 from asyncio import run
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 
 import pytest
 import full_match
@@ -306,3 +307,41 @@ def test_choose_tilde_syntax_off_and_use_tilde():
 
     with pytest.raises(NotImplementedError, match=full_match('The syntax with ~ is disabled for this superfunction. Call it with simple breackets.')):
         ~function()
+
+
+def test_call_superfunction_without_tilde_syntax_whet_it_is_on_by_default():
+    exception_message = None
+    def temporary_hook(unraisable):
+        nonlocal exception_message
+        exception_message = str(unraisable.exc_value)
+    old_hook = sys.unraisablehook
+    sys.unraisablehook = temporary_hook
+
+    @superfunction
+    def function():
+        pass
+
+    function()
+
+    assert 'The tilde-syntax is enabled for the "function" function. Call it like this: ~function().' == exception_message
+
+    sys.unraisablehook = old_hook
+
+
+def test_call_superfunction_without_tilde_syntax_whet_it_is_on():
+    exception_message = None
+    def temporary_hook(unraisable):
+        nonlocal exception_message
+        exception_message = str(unraisable.exc_value)
+    old_hook = sys.unraisablehook
+    sys.unraisablehook = temporary_hook
+
+    @superfunction(tilde_syntax=True)
+    def function():
+        pass
+
+    function()
+
+    assert 'The tilde-syntax is enabled for the "function" function. Call it like this: ~function().' == exception_message
+
+    sys.unraisablehook = old_hook
