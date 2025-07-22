@@ -297,3 +297,12 @@ def test_pass_not_function_to_decorator():
 def test_try_to_pass_lambda_to_decorator():
     with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction. Don't use lambdas here.")):
         superfunction(lambda x: x)
+
+
+def test_choose_tilde_syntax_off_and_use_tilde():
+    @superfunction(tilde_syntax=False)
+    def function():
+        pass
+
+    with pytest.raises(NotImplementedError, match=full_match('The syntax with ~ is disabled for this superfunction. Call it with simple breackets.')):
+        ~function()
