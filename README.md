@@ -292,7 +292,7 @@ my_superfunction()
 
 However, it is not completely free. The fact is that this mode uses a special trick with a reference counter, a special mechanism inside the interpreter that cleans up memory. When there is no reference to an object, the interpreter deletes it, and you can link your callback to this process. It is inside such a callback that the contents of your function are actually executed. This imposes some restrictions on you:
 
-- You cannot use the return values from this function in any way. This works in the coroutine function mode, but not in the regular mode without tilde. If you try to save the result of a function call to a variable, the reference counter to the returned object will not reset while this variable exists, and accordingly the function will not actually be called.
+- You cannot use the return values from this function in any way. If you try to save the result of a function call to a variable, the reference counter to the returned object will not reset while this variable exists, and accordingly the function will not actually be called.
 - Exceptions will not work normally inside this function. Rather, they can be picked up and intercepted in [`sys.unraisablehook`](https://docs.python.org/3/library/sys.html#sys.unraisablehook), but they will not go up the stack above this function. This is due to a feature of CPython: exceptions that occur inside callbacks for finalizing objects are completely escaped.
 
 This mode is well suited for functions such as logging or sending statistics from your code: simple functions from which no exceptions or return values are expected. In all other cases, I recommend using the tilde syntax.
