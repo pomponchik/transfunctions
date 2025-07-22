@@ -250,10 +250,14 @@ With the `@superfunction` decorator, you no longer need to call special methods 
 
 If you use it as a regular function, a regular function will be created "under the hood" based on the template and then called:
 
+To call a superfunction like a regular function, you need to use a special tilde syntax:
+
 ```python
-my_superfunction()
+~my_superfunction()
 #> so, it's just usual function!
 ```
+
+Yes, the tilde syntax simply means putting the `~` symbol in front of the function name when calling it.
 
 If you use `asyncio.run` or the `await` keyword when calling, the async version of the function will be automatically generated and called:
 
