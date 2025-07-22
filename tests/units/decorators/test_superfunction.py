@@ -1,7 +1,7 @@
 import io
 import sys
 from asyncio import run
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import redirect_stdout
 
 import pytest
 import full_match
