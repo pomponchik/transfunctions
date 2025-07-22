@@ -78,18 +78,17 @@ not_display(UsageTracer)
 
 def superfunction(*args: Callable, tilde_syntax: bool = True):
     def decorator(function):
-        class NoReturns(NodeTransformer):
-            def visit_Return(self, node: Return) -> Optional[Union[AST, List[AST]]]:
-                raise WrongTransfunctionSyntaxError('A superfunction cannot contain a return statement.')
-
         transformer = FunctionTransformer(
             function,
             currentframe().f_back.f_lineno,
             'superfunction',
-            extra_transformers=[
-                #NoReturns(),
-            ],
         )
+
+        if not tilde_syntax:
+            class NoReturns(NodeTransformer):
+                def visit_Return(self, node: Return) -> Optional[Union[AST, List[AST]]]:
+                    raise WrongTransfunctionSyntaxError('A superfunction cannot contain a return statement.')
+            transformer.get_usual_function(addictional_transformers=[NoReturns()])
 
         @wraps(function)
         def wrapper(*args, **kwargs):
