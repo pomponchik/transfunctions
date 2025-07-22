@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 import pytest
 import full_match
 
-from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, WrongDecoratorSyntaxError
+from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, WrongDecoratorSyntaxError, WrongTransfunctionSyntaxError
 
 """
 Что нужно проверить:
@@ -345,3 +345,65 @@ def test_call_superfunction_without_tilde_syntax_whet_it_is_on():
     assert 'The tilde-syntax is enabled for the "function" function. Call it like this: ~function().' == exception_message
 
     sys.unraisablehook = old_hook
+
+
+def test_there_is_exception_if_not_tilde_mode_and_in_function_is_empty_return_in_common_block():
+    with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
+        @superfunction(tilde_syntax=False)
+        def function():
+            return
+
+
+def test_there_is_exception_if_not_tilde_mode_and_in_function_is_return_true_in_common_block():
+    with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
+        @superfunction(tilde_syntax=False)
+        def function():
+            return True
+
+
+def test_there_is_exception_if_not_tilde_mode_and_in_function_is_empty_return_in_sync_block():
+    with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
+        @superfunction(tilde_syntax=False)
+        def function():
+            with sync_context:
+                return
+
+
+def test_there_is_exception_if_not_tilde_mode_and_in_function_is_return_true_in_sync_block():
+    with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
+        @superfunction(tilde_syntax=False)
+        def function():
+            with sync_context:
+                return True
+
+
+def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_empty_return_in_async_block():
+    @superfunction(tilde_syntax=False)
+    def function():
+        with async_context:
+            return
+        pass
+
+
+def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_true_in_async_block():
+    @superfunction(tilde_syntax=False)
+    def function():
+        with async_context:
+            return True
+        pass
+
+
+def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_empty_return_in_generator_block():
+    @superfunction(tilde_syntax=False)
+    def function():
+        with generator_context:
+            return
+        pass
+
+
+def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_true_in_generator_block():
+    @superfunction(tilde_syntax=False)
+    def function():
+        with generator_context:
+            return True
+        pass
