@@ -22,7 +22,7 @@ from transfunctions import superfunction, sync_context, async_context, generator
 """
 
 
-def test_just_sync_call():
+def test_just_sync_call_without_breackets():
     @superfunction
     def function():
         with sync_context:
@@ -34,7 +34,39 @@ def test_just_sync_call():
 
     buffer = io.StringIO()
     with redirect_stdout(buffer):
+        ~function()
+    assert buffer.getvalue() == "1\n"
+
+
+def test_just_sync_call_without_tilde_syntax():
+    @superfunction(tilde_syntax=False)
+    def function():
+        with sync_context:
+            print(1)
+        with async_context:
+            print(2)
+        with generator_context:
+            yield from [1, 2, 3]
+
+    buffer = io.StringIO()
+    with redirect_stdout(buffer):
         function()
+    assert buffer.getvalue() == "1\n"
+
+
+def test_just_sync_call_with_tilde_syntax():
+    @superfunction(tilde_syntax=True)
+    def function():
+        with sync_context:
+            print(1)
+        with async_context:
+            print(2)
+        with generator_context:
+            yield from [1, 2, 3]
+
+    buffer = io.StringIO()
+    with redirect_stdout(buffer):
+        ~function()
     assert buffer.getvalue() == "1\n"
 
 
@@ -84,7 +116,7 @@ def test_just_sync_call_with_arguments():
 
     buffer = io.StringIO()
     with redirect_stdout(buffer):
-        function(1, 2)
+        ~function(1, 2)
     assert buffer.getvalue() == "1\n"
 
 

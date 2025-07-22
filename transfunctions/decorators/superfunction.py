@@ -46,8 +46,9 @@ class UsageTracer(CoroutineClass):
         if not self.tilde_syntax:
             raise NotImplementedError('The syntax with ~ is disabled for this superfunction. Call it with simple breackets.')
 
-        result = self.finalizer()
-        return result
+        self.flags['used'] = True
+        self.coroutine.close()
+        return self.transformer.get_usual_function()(*(self.args), **(self.kwargs))
 
     def send(self, value: Any) -> Any:
         return self.coroutine.send(value)
