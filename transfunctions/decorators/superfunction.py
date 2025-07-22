@@ -28,8 +28,8 @@ class UsageTracer(CoroutineClass):
         self.args = args
         self.kwargs = kwargs
         self.transformer = transformer
-        self.coroutine = self.async_sleep_option(self.flags, args, kwargs, transformer)
-        self.finalizer = weakref.finalize(self, self.sync_sleep_option, self.flags, args, kwargs, transformer, self.coroutine)
+        self.coroutine = self.async_option(self.flags, args, kwargs, transformer)
+        self.finalizer = weakref.finalize(self, self.sync_option, self.flags, args, kwargs, transformer, self.coroutine)
 
     def __iter__(self):
         self.flags['used'] = True
@@ -55,13 +55,13 @@ class UsageTracer(CoroutineClass):
         pass
 
     @staticmethod
-    def sync_sleep_option(flags: Dict[str, bool], args, kwargs, transformer, wrapped_coroutine: CoroutineClass) -> None:
+    def sync_option(flags: Dict[str, bool], args, kwargs, transformer, wrapped_coroutine: CoroutineClass) -> None:
         if not flags.get('used', False):
             wrapped_coroutine.close()
             return transformer.get_usual_function()(*args, **kwargs)
 
     @staticmethod
-    async def async_sleep_option(flags: Dict[str, bool], args, kwargs, transformer) -> None:
+    async def async_option(flags: Dict[str, bool], args, kwargs, transformer) -> None:
         flags['used'] = True
         return await transformer.get_async_function()(*args, **kwargs)
 
