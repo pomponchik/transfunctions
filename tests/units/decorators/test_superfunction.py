@@ -255,3 +255,8 @@ def test_pass_coroutine_function_to_decorator():
         @superfunction
         async def function_maker():
             return 4
+
+
+def test_pass_not_function_to_decorator():
+    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction.")):
+        superfunction(1)
