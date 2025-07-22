@@ -1,4 +1,5 @@
 import io
+import sys
 from asyncio import run
 from contextlib import redirect_stdout
 
@@ -22,7 +23,7 @@ from transfunctions import superfunction, sync_context, async_context, generator
 """
 
 
-def test_just_sync_call():
+def test_just_sync_call_without_breackets():
     @superfunction
     def function():
         with sync_context:
@@ -34,7 +35,39 @@ def test_just_sync_call():
 
     buffer = io.StringIO()
     with redirect_stdout(buffer):
+        ~function()
+    assert buffer.getvalue() == "1\n"
+
+
+def test_just_sync_call_without_tilde_syntax():
+    @superfunction(tilde_syntax=False)
+    def function():
+        with sync_context:
+            print(1)
+        with async_context:
+            print(2)
+        with generator_context:
+            yield from [1, 2, 3]
+
+    buffer = io.StringIO()
+    with redirect_stdout(buffer):
         function()
+    assert buffer.getvalue() == "1\n"
+
+
+def test_just_sync_call_with_tilde_syntax():
+    @superfunction(tilde_syntax=True)
+    def function():
+        with sync_context:
+            print(1)
+        with async_context:
+            print(2)
+        with generator_context:
+            yield from [1, 2, 3]
+
+    buffer = io.StringIO()
+    with redirect_stdout(buffer):
+        ~function()
     assert buffer.getvalue() == "1\n"
 
 
@@ -84,7 +117,7 @@ def test_just_sync_call_with_arguments():
 
     buffer = io.StringIO()
     with redirect_stdout(buffer):
-        function(1, 2)
+        ~function(1, 2)
     assert buffer.getvalue() == "1\n"
 
 
@@ -248,3 +281,67 @@ def test_combine_with_other_decorator_after():
 
     with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @superfunction decorator cannot be used in conjunction with other decorators.')):
         ~template()
+
+
+def test_pass_coroutine_function_to_decorator():
+    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction. You can't use async functions.")):
+        @superfunction
+        async def function_maker():
+            return 4
+
+
+def test_pass_not_function_to_decorator():
+    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction.")):
+        superfunction(1)
+
+
+def test_try_to_pass_lambda_to_decorator():
+    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction. Don't use lambdas here.")):
+        superfunction(lambda x: x)
+
+
+def test_choose_tilde_syntax_off_and_use_tilde():
+    @superfunction(tilde_syntax=False)
+    def function():
+        pass
+
+    with pytest.raises(NotImplementedError, match=full_match('The syntax with ~ is disabled for this superfunction. Call it with simple breackets.')):
+        ~function()
+
+
+def test_call_superfunction_without_tilde_syntax_whet_it_is_on_by_default():
+    exception_message = None
+    def temporary_hook(unraisable):
+        nonlocal exception_message
+        exception_message = str(unraisable.exc_value)
+    old_hook = sys.unraisablehook
+    sys.unraisablehook = temporary_hook
+
+    @superfunction
+    def function():
+        pass
+
+    function()
+
+    assert 'The tilde-syntax is enabled for the "function" function. Call it like this: ~function().' == exception_message
+
+    sys.unraisablehook = old_hook
+
+
+def test_call_superfunction_without_tilde_syntax_whet_it_is_on():
+    exception_message = None
+    def temporary_hook(unraisable):
+        nonlocal exception_message
+        exception_message = str(unraisable.exc_value)
+    old_hook = sys.unraisablehook
+    sys.unraisablehook = temporary_hook
+
+    @superfunction(tilde_syntax=True)
+    def function():
+        pass
+
+    function()
+
+    assert 'The tilde-syntax is enabled for the "function" function. Call it like this: ~function().' == exception_message
+
+    sys.unraisablehook = old_hook

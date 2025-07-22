@@ -136,6 +136,8 @@ class FunctionTransformer:
                         raise WrongDecoratorSyntaxError(f"The @{decorator_name} decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")
 
                     for decorator in node.decorator_list:
+                        if isinstance(decorator, Call):
+                            decorator = decorator.func
                         if decorator.id != decorator_name:
                             raise WrongDecoratorSyntaxError(f'The @{decorator_name} decorator cannot be used in conjunction with other decorators.')
                         else:

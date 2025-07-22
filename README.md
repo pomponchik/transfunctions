@@ -250,10 +250,14 @@ With the `@superfunction` decorator, you no longer need to call special methods 
 
 If you use it as a regular function, a regular function will be created "under the hood" based on the template and then called:
 
+To call a superfunction like a regular function, you need to use a special tilde syntax:
+
 ```python
-my_superfunction()
+~my_superfunction()
 #> so, it's just usual function!
 ```
+
+Yes, the tilde syntax simply means putting the `~` symbol in front of the function name when calling it.
 
 If you use `asyncio.run` or the `await` keyword when calling, the async version of the function will be automatically generated and called:
 
@@ -273,15 +277,22 @@ list(my_superfunction())
 
 How does it work? In fact, `my_superfunction` returns some kind of intermediate object that can be both a coroutine and a generator and an ordinary function. Depending on how it is handled, it lazily code-generates the desired version of the function from a given template and uses it.
 
-Separately, it is worth considering how the superfunction works in the normal function mode. The point is that we need to somehow distinguish a call wrapped with an `await` statement or iteration from a call in which we use a function as a regular function. To do this, a special trick is used by default: assigning a finalizer to reset the reference counter to a variable. When the reference count is zero, the normal (synchronous) implementation of the function is automatically called. However, this imposes 2 restrictions:
-
-- You cannot use the return values from this function in any way. This works in the coroutine function mode, but not in the regular mode. If you try to save the result of a function call to a variable, the reference counter to the returned object will not reset while this variable exists, and accordingly the function will not actually be called.
-- Exceptions will not work normally inside this function. Rather, they can be picked up and intercepted in [`sys.unraisablehook`](https://docs.python.org/3/library/sys.html#sys.unraisablehook), but they will not go up the stack above this function. This is due to a feature of CPython: exceptions that occur inside callbacks for finalizing objects are completely escaped.
-
-To get around both of these problems, you can use a special syntactic trick: put the `~` symbol before calling the function. Like this:
+By default, a superfunction is called as a regular function using tilde syntax, but there is another mode. To enable it, use the appropriate flag in the decorator:
 
 ```python
-~my_superfunction()
+@superfunction(tilde_syntax=False)
 ```
 
-In this case, the behavior of the superfunction will be completely indistinguishable from the behavior of a regular function. Return expressions and exceptions will work exactly as you expect them to.
+In this case, the superfunction can be called in exactly the same way as a regular function:
+
+```python
+my_superfunction()
+#> so, it's just usual function!
+```
+
+However, it is not completely free. The fact is that this mode uses a special trick with a reference counter, a special mechanism inside the interpreter that cleans up memory. When there is no reference to an object, the interpreter deletes it, and you can link your callback to this process. It is inside such a callback that the contents of your function are actually executed. This imposes some restrictions on you:
+
+- You cannot use the return values from this function in any way. If you try to save the result of a function call to a variable, the reference counter to the returned object will not reset while this variable exists, and accordingly the function will not actually be called.
+- Exceptions will not work normally inside this function. Rather, they can be picked up and intercepted in [`sys.unraisablehook`](https://docs.python.org/3/library/sys.html#sys.unraisablehook), but they will not go up the stack above this function. This is due to a feature of CPython: exceptions that occur inside callbacks for finalizing objects are completely escaped.
+
+This mode is well suited for functions such as logging or sending statistics from your code: simple functions from which no exceptions or return values are expected. In all other cases, I recommend using the tilde syntax.
