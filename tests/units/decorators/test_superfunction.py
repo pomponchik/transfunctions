@@ -260,3 +260,8 @@ def test_pass_coroutine_function_to_decorator():
 def test_pass_not_function_to_decorator():
     with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction.")):
         superfunction(1)
+
+
+def test_try_to_pass_lambda_to_decorator():
+    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction. Don't use lambdas here.")):
+        superfunction(lambda x: x)
