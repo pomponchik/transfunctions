@@ -248,3 +248,10 @@ def test_combine_with_other_decorator_after():
 
     with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @superfunction decorator cannot be used in conjunction with other decorators.')):
         ~template()
+
+
+def test_pass_coroutine_function_to_decorator():
+    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction. You can't use async functions.")):
+        @superfunction
+        async def function_maker():
+            return 4
