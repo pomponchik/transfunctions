@@ -382,7 +382,6 @@ def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_empty_retu
     def function():
         with async_context:
             return
-        pass
 
 
 def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_true_in_async_block():
@@ -390,7 +389,6 @@ def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_tru
     def function():
         with async_context:
             return True
-        pass
 
 
 def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_empty_return_in_generator_block():
@@ -398,7 +396,6 @@ def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_empty_retu
     def function():
         with generator_context:
             return
-        pass
 
 
 def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_true_in_generator_block():
@@ -406,4 +403,3 @@ def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_tru
     def function():
         with generator_context:
             return True
-        pass

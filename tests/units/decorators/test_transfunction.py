@@ -771,3 +771,47 @@ def test_combine_with_other_decorator_after():
 
     with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @transfunction decorator cannot be used in conjunction with other decorators.')):
         template.get_usual_function()
+
+
+def test_create_empty_usual_function_without_arguments():
+    @transfunction
+    def template():
+        with async_context:
+            pass
+
+    function = template.get_usual_function()
+
+    assert function() is None
+
+
+def test_create_empty_usual_function_with_arguments():
+    @transfunction
+    def template(a, b):
+        with async_context:
+            return a + b
+
+    function = template.get_usual_function()
+
+    assert function(1, 2) is None
+
+
+def test_create_empty_async_function_without_arguments():
+    @transfunction
+    def template():
+        with sync_context:
+            pass
+
+    function = template.get_async_function()
+
+    assert run(function()) is None
+
+
+def test_create_empty_async_function_with_arguments():
+    @transfunction
+    def template(a, b):
+        with sync_context:
+            return a + b
+
+    function = template.get_async_function()
+
+    assert run(function(1, 2)) is None
