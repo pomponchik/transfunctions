@@ -403,3 +403,39 @@ def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_tru
     def function():
         with generator_context:
             return True
+
+
+def test_async_function_with_all_content_in_generator_context():
+    @superfunction
+    def function():
+        with generator_context:
+            return True
+
+    assert run(function()) is None
+
+
+def test_async_function_with_all_content_in_sync_context():
+    @superfunction
+    def function():
+        with sync_context:
+            return True
+
+    assert run(function()) is None
+
+
+def test_usual_tilde_function_with_all_content_in_generator_context():
+    @superfunction
+    def function():
+        with generator_context:
+            return True
+
+    assert ~function() is None
+
+
+def test_usual_tilde_function_with_all_content_in_async_context():
+    @superfunction
+    def function():
+        with async_context:
+            return True
+
+    assert ~function() is None
