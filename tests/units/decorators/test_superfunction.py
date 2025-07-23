@@ -11,15 +11,15 @@ from transfunctions import superfunction, sync_context, async_context, generator
 """
 Что нужно проверить:
 
-2. При попытке вызвать без тильды суперфункцию, в которой есть return или raise, должно подниматься исключение, причем .
 3. Трейсбек исключения из п. 2 информативен (т.е. содержит конкретную строчку кода, и короткий). Но есть возможность увидеть полный "настоящий" трейсбек.
 4. Базовые кейсы работают в глобальном скоупе.
-6. С синтаксисом ~ нормально поднимаются исключения.
 
 Что проверено:
 
 1. Все базово работает без аргументов и с аргументами, для обычных, асинк и генераторных функций.
 5. С использованием синтаксиса ~ для вызова обычных функций можно возвращать значения, с аргументами и без.
+2. При попытке вызвать без тильды суперфункцию, в которой есть return или raise, должно подниматься исключение.
+6. С синтаксисом ~ нормально поднимаются исключения.
 """
 
 
@@ -382,7 +382,6 @@ def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_empty_retu
     def function():
         with async_context:
             return
-        pass
 
 
 def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_true_in_async_block():
@@ -390,7 +389,6 @@ def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_tru
     def function():
         with async_context:
             return True
-        pass
 
 
 def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_empty_return_in_generator_block():
@@ -398,7 +396,6 @@ def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_empty_retu
     def function():
         with generator_context:
             return
-        pass
 
 
 def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_true_in_generator_block():
@@ -406,4 +403,39 @@ def test_there_are_no_exceptions_if_not_tilde_mode_and_in_function_is_return_tru
     def function():
         with generator_context:
             return True
-        pass
+
+
+def test_async_function_with_all_content_in_generator_context():
+    @superfunction
+    def function():
+        with generator_context:
+            return True
+
+    assert run(function()) is None
+
+
+def test_async_function_with_all_content_in_sync_context():
+    @superfunction
+    def function():
+        with sync_context:
+            return True
+
+    assert run(function()) is None
+
+
+def test_usual_tilde_function_with_all_content_in_generator_context():
+    @superfunction
+    def function():
+        with generator_context:
+            return True
+
+    assert ~function() is None
+
+
+def test_usual_tilde_function_with_all_content_in_async_context():
+    @superfunction
+    def function():
+        with async_context:
+            return True
+
+    assert ~function() is None

@@ -3,7 +3,7 @@ from typing import Optional, Union, List, Dict, Any
 from types import MethodType, FunctionType
 from collections.abc import Callable
 from inspect import isfunction, iscoroutinefunction, getsource, getfile
-from ast import parse, NodeTransformer, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Call, With, Return, Name, Load, Assign, Constant, Store, arguments
+from ast import parse, NodeTransformer, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Call, With, Return, Name, Load, Assign, Constant, Store, Pass, arguments
 from functools import wraps, update_wrapper
 
 from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
@@ -113,10 +113,16 @@ class FunctionTransformer:
 
         class RewriteContexts(NodeTransformer):
             def visit_With(self, node: With) -> Optional[Union[AST, List[AST]]]:
-                if len(node.items) == 1 and node.items[0].context_expr.id == context_name:
-                    return node.body
-                elif len(node.items) == 1 and node.items[0].context_expr.id != context_name and context_name in ('async_context', 'sync_context', 'generator_context'):
-                    return None
+                if len(node.items) == 1:
+                    if isinstance(node.items[0].context_expr, Name):
+                        context_expr = node.items[0].context_expr
+                    elif isinstance(node.items[0].context_expr, Call):
+                        context_expr = node.items[0].context_expr.func
+
+                    if context_expr.id == context_name:
+                        return node.body
+                    if context_expr.id != context_name and context_expr.id in ('async_context', 'sync_context', 'generator_context'):
+                        return None
                 return node
 
         class DeleteDecorator(NodeTransformer):
@@ -143,6 +149,13 @@ class FunctionTransformer:
 
         RewriteContexts().visit(tree)
         DeleteDecorator().visit(tree)
+
+        if not tree.body[0].body:
+            tree.body[0].body.append(
+                Pass(
+                    col_offset=tree.body[0].col_offset,
+                ),
+            )
 
         if addictional_transformers is not None:
             for addictional_transformer in addictional_transformers:
