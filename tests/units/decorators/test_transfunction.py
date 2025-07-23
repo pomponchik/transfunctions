@@ -1,6 +1,7 @@
 import traceback
 from inspect import isfunction, iscoroutinefunction, isgeneratorfunction, getsourcelines
 from asyncio import run
+from contextlib import contextmanager
 
 import pytest
 import full_match
@@ -19,13 +20,15 @@ SOME_GLOBAL = 777
 
 23. Если использовать 'await_it' вне асинк блока, поднимется исключение.
 14. Все работает с любыми уровнями вложенности (попробовать объявить функцию внутри функции).
-15. Сторонние контекстные менеджеры работают, как со скобками, так и без.
+15. Сторонние контекстные менеджеры работают, как со скобками, так и без, как вне контекстных маркеров, так и внутри.
 16. При попытке использовать маркерные контекстные менеджеры со скобками поднимается информативное исключение.
 18. При попытке сгенерировать генераторную функцию без "yield" или "yield from" - поднимается исключение.
 19. При попытке сгенерировать обычную функцию, в которой есть "yield" или "yield from" - поднимется исключение.
 20. При попытке сгенерировать асинк функцию, в которой есть "yield" или "yield from" - поднимется исключение.
 22. При подмене имен переменных из списка все продолжает работать: 'transfunction', 'create_async_context', 'create_sync_context', 'create_generator_context', 'await_it'.
 25. Кэширование работает.
+27. Работает совмещение 2 сторонних контекстных менеджеров (как со скобками, так и без).
+28. Нельзя использовать контекстные маркеры вместе со сторонними контекстными менеджерами.
 
 2 фаза:
 
@@ -815,3 +818,375 @@ def test_create_empty_async_function_with_arguments():
     function = template.get_async_function()
 
     assert run(function(1, 2)) is None
+
+
+def test_other_context_managers_with_empty_parentness_are_working_in_usual_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template():
+        with context_manager_with_parentnes() as something:
+            return something
+
+    function = template.get_usual_function()
+
+    assert function() == 123
+
+
+def test_other_context_managers_with_empty_parentness_are_working_in_usual_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template(a, b):
+        with context_manager_with_parentnes() as something:
+            return something + a + b
+
+    function = template.get_usual_function()
+
+    assert function(1, 2) == 126
+
+
+def test_other_context_managers_with_not_empty_parentness_are_working_in_usual_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template():
+        with context_manager_with_parentnes(4) as something:
+            return something
+
+    function = template.get_usual_function()
+
+    assert function() == 127
+
+
+def test_other_context_managers_with_not_empty_parentness_are_working_in_usual_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template(a, b):
+        with context_manager_with_parentnes(4) as something:
+            return something + a + b
+
+    function = template.get_usual_function()
+
+    assert function(1, 2) == 130
+
+
+def test_other_context_managers_with_empty_parentness_are_working_in_async_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template():
+        with context_manager_with_parentnes() as something:
+            return something
+
+    function = template.get_async_function()
+
+    assert run(function()) == 123
+
+
+def test_other_context_managers_with_empty_parentness_are_working_in_async_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template(a, b):
+        with context_manager_with_parentnes() as something:
+            return something + a + b
+
+    function = template.get_async_function()
+
+    assert run(function(1, 2)) == 126
+
+
+def test_other_context_managers_with_not_empty_parentness_are_working_in_async_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template():
+        with context_manager_with_parentnes(4) as something:
+            return something
+
+    function = template.get_async_function()
+
+    assert run(function()) == 127
+
+
+def test_other_context_managers_with_not_empty_parentness_are_working_in_async_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template(a, b):
+        with context_manager_with_parentnes(4) as something:
+            return something + a + b
+
+    function = template.get_async_function()
+
+    assert run(function(1, 2)) == 130
+
+
+def test_other_context_managers_with_empty_parentness_are_working_in_generator_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template():
+        with context_manager_with_parentnes() as something:
+            yield something
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [123]
+
+
+def test_other_context_managers_with_empty_parentness_are_working_in_generator_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template(a, b):
+        with context_manager_with_parentnes() as something:
+            yield something + a + b
+
+    function = template.get_generator_function()
+
+    assert list(function(1, 2)) == [126]
+
+
+def test_other_context_managers_with_not_empty_parentness_are_working_in_generator_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template():
+        with context_manager_with_parentnes(4) as something:
+            yield something
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [127]
+
+
+def test_other_context_managers_with_not_empty_parentness_are_working_in_generator_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template(a, b):
+        with context_manager_with_parentnes(4) as something:
+            yield something + a + b
+
+    function = template.get_generator_function()
+
+    assert list(function(1, 2)) == [130]
+
+
+def test_other_context_managers_into_context_marker_with_empty_parentness_are_working_in_usual_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template():
+        with sync_context:
+            with context_manager_with_parentnes() as something:
+                return something
+
+    function = template.get_usual_function()
+
+    assert function() == 123
+
+
+def test_other_context_managers_into_context_marker_with_empty_parentness_are_working_in_usual_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template(a, b):
+        with sync_context:
+            with context_manager_with_parentnes() as something:
+                return something + a + b
+
+    function = template.get_usual_function()
+
+    assert function(1, 2) == 126
+
+
+def test_other_context_managers_into_context_marker_with_not_empty_parentness_are_working_in_usual_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template():
+        with sync_context:
+            with context_manager_with_parentnes(4) as something:
+                return something
+
+    function = template.get_usual_function()
+
+    assert function() == 127
+
+
+def test_other_context_managers_into_context_marker_with_not_empty_parentness_are_working_in_usual_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template(a, b):
+        with sync_context:
+            with context_manager_with_parentnes(4) as something:
+                return something + a + b
+
+    function = template.get_usual_function()
+
+    assert function(1, 2) == 130
+
+
+def test_other_context_managers_into_context_marker_with_empty_parentness_are_working_in_async_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template():
+        with async_context:
+            with context_manager_with_parentnes() as something:
+                return something
+
+    function = template.get_async_function()
+
+    assert run(function()) == 123
+
+
+def test_other_context_managers_into_context_marker_with_empty_parentness_are_working_in_async_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template(a, b):
+        with async_context:
+            with context_manager_with_parentnes() as something:
+                return something + a + b
+
+    function = template.get_async_function()
+
+    assert run(function(1, 2)) == 126
+
+
+def test_other_context_managers_into_context_marker_with_not_empty_parentness_are_working_in_async_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template():
+        with async_context:
+            with context_manager_with_parentnes(4) as something:
+                return something
+
+    function = template.get_async_function()
+
+    assert run(function()) == 127
+
+
+def test_other_context_managers_into_context_marker_with_not_empty_parentness_are_working_in_async_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template(a, b):
+        with async_context:
+            with context_manager_with_parentnes(4) as something:
+                return something + a + b
+
+    function = template.get_async_function()
+
+    assert run(function(1, 2)) == 130
+
+
+def test_other_context_managers_into_context_marker_with_empty_parentness_are_working_in_generator_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template():
+        with generator_context:
+            with context_manager_with_parentnes() as something:
+                yield something
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [123]
+
+
+def test_other_context_managers_into_context_marker_with_empty_parentness_are_working_in_generator_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes():
+        yield 123
+
+    @transfunction
+    def template(a, b):
+        with generator_context:
+            with context_manager_with_parentnes() as something:
+                yield something + a + b
+
+    function = template.get_generator_function()
+
+    assert list(function(1, 2)) == [126]
+
+
+def test_other_context_managers_into_context_marker_with_not_empty_parentness_are_working_in_generator_function_without_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template():
+        with generator_context:
+            with context_manager_with_parentnes(4) as something:
+                yield something
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [127]
+
+
+def test_other_context_managers_into_context_marker_with_not_empty_parentness_are_working_in_generator_function_with_arguments():
+    @contextmanager
+    def context_manager_with_parentnes(c):
+        yield 123 + c
+
+    @transfunction
+    def template(a, b):
+        with generator_context:
+            with context_manager_with_parentnes(4) as something:
+                yield something + a + b
+
+    function = template.get_generator_function()
+
+    assert list(function(1, 2)) == [130]

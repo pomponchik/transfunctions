@@ -113,10 +113,16 @@ class FunctionTransformer:
 
         class RewriteContexts(NodeTransformer):
             def visit_With(self, node: With) -> Optional[Union[AST, List[AST]]]:
-                if len(node.items) == 1 and node.items[0].context_expr.id == context_name:
-                    return node.body
-                elif len(node.items) == 1 and node.items[0].context_expr.id != context_name and context_name in ('async_context', 'sync_context', 'generator_context'):
-                    return None
+                if len(node.items) == 1:
+                    if isinstance(node.items[0].context_expr, Name):
+                        context_expr = node.items[0].context_expr
+                    elif isinstance(node.items[0].context_expr, Call):
+                        context_expr = node.items[0].context_expr.func
+
+                    if context_expr.id == context_name:
+                        return node.body
+                    if context_expr.id != context_name and context_expr.id in ('async_context', 'sync_context', 'generator_context'):
+                        return None
                 return node
 
         class DeleteDecorator(NodeTransformer):
