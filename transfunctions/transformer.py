@@ -3,7 +3,7 @@ from typing import Optional, Union, List, Dict, Any
 from types import MethodType, FunctionType
 from collections.abc import Callable
 from inspect import isfunction, iscoroutinefunction, getsource, getfile
-from ast import parse, NodeTransformer, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Call, With, Return, Name, Load, Assign, Constant, Store, arguments
+from ast import parse, NodeTransformer, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Call, With, Return, Name, Load, Assign, Constant, Store, Pass, arguments
 from functools import wraps, update_wrapper
 
 from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
@@ -143,6 +143,13 @@ class FunctionTransformer:
 
         RewriteContexts().visit(tree)
         DeleteDecorator().visit(tree)
+
+        if not tree.body[0].body:
+            tree.body[0].body.append(
+                Pass(
+                    col_offset=tree.body[0].col_offset,
+                ),
+            )
 
         if addictional_transformers is not None:
             for addictional_transformer in addictional_transformers:
