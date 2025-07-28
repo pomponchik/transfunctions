@@ -5,7 +5,13 @@ test.py
 *.egg-info
 dist
 venv
+.venv
 build
 .ruff_cache
 .mypy_cache
 .coverage
+uv.lock
+.history
+.vscode/
+.idea/
+temp*

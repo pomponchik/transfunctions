@@ -16,6 +16,7 @@ dependencies = [
     'dill==0.4.0',
     'typing_extensions ; python_version <= "3.10"',
 ]
+
 classifiers = [
     "Operating System :: OS Independent",
     'Operating System :: MacOS :: MacOS X',
@@ -43,6 +44,18 @@ keywords = [
     'ast manipulation',
     'metaprogramming',
     'magic',
+]
+
+[dependency-groups]
+dev = [
+    "pytest==7.4.3",
+    "coverage==7.6.1",
+    "build==1.2.2.post1",
+    "twine==6.1.0",
+    "mypy==1.14.1",
+    "ruff==0.9.9",
+    "mutmut==3.2.3",
+    "full_match==0.0.2",
 ]
 
 [tool.setuptools.package-data]

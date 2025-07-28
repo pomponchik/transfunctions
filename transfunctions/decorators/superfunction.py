@@ -1,103 +1,166 @@
-import sys
 import weakref
-from ast import NodeTransformer, Return, AST
-from inspect import currentframe
+from ast import AST, NodeTransformer, Return
+from collections.abc import Generator
 from functools import wraps
-from typing import Dict, Any, Optional, Union, List, Callable
-from collections.abc import Coroutine
-
-if sys.version_info <= (3, 10):  # pragma: no cover
-    from typing_extensions import TypeAlias
-else:  # pragma: no cover
-    from typing import TypeAlias
+from inspect import currentframe
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, overload
 
 from displayhooks import not_display
 
+from transfunctions.errors import (
+    AmbiguousFrameSyntaxError,
+    WrongTransfunctionSyntaxError,
+)
 from transfunctions.transformer import FunctionTransformer
-from transfunctions.errors import WrongTransfunctionSyntaxError
+from transfunctions.typing_compat import Callable, Coroutine, ParamSpec
+
+R = TypeVar("R")
+P = ParamSpec("P")
 
 
-if sys.version_info <= (3, 9):  # pragma: no cover
-    CoroutineClass = Coroutine
-else:  # pragma: no cover
-    CoroutineClass: TypeAlias = Coroutine[Any, Any, None]
-
-class UsageTracer(CoroutineClass):
-    def __init__(self, args, kwargs, transformer, tilde_syntax: bool) -> None:
-        self.flags: Dict[str, bool] = {}
+class ParamSpecContainer(Generic[P]):
+    def __init__(self, *args: P.args, **kwargs: P.kwargs) -> None:
         self.args = args
         self.kwargs = kwargs
+
+
+class UsageTracer(Generic[P, R], Coroutine[Any, None, R]):
+    def __init__(
+        self,
+        param_spec: ParamSpecContainer[P],
+        transformer: FunctionTransformer[P, R],
+        tilde_syntax: bool,
+    ) -> None:
+        self.flags: Dict[str, bool] = {}
+        self.args = param_spec.args
+        self.kwargs = param_spec.kwargs
         self.transformer = transformer
         self.tilde_syntax = tilde_syntax
-        self.coroutine = self.async_option(self.flags, args, kwargs, transformer)
-        self.finalizer = weakref.finalize(self, self.sync_option, self.flags, args, kwargs, transformer, self.coroutine, tilde_syntax)
+        self.coroutine = self.async_option(self.flags, param_spec, transformer)
+        self.finalizer = weakref.finalize(
+            self,
+            self.sync_option,
+            self.flags,
+            param_spec,
+            transformer,
+            self.coroutine,
+            tilde_syntax,
+        )
 
-    def __iter__(self):
-        self.flags['used'] = True
+    def __iter__(self) -> Generator[R, None, None]:
+        self.flags["used"] = True
         self.coroutine.close()
         generator_function = self.transformer.get_generator_function()
         generator = generator_function(*(self.args), **(self.kwargs))
         yield from generator
 
-    def __await__(self) -> Any:  # pragma: no cover
+    def __await__(self) -> Generator[Any, None, R]:
         return self.coroutine.__await__()
 
-    def __invert__(self):
+    def __invert__(self) -> R:
         if not self.tilde_syntax:
-            raise NotImplementedError('The syntax with ~ is disabled for this superfunction. Call it with simple breackets.')
+            raise NotImplementedError(
+                "The syntax with ~ is disabled for this superfunction. Call it with simple breackets."
+            )
 
-        self.flags['used'] = True
+        self.flags["used"] = True
         self.coroutine.close()
         return self.transformer.get_usual_function()(*(self.args), **(self.kwargs))
 
     def send(self, value: Any) -> Any:
         return self.coroutine.send(value)
 
-    def throw(self, exception_type: Any, value: Any = None, traceback: Any = None) -> None:  # pragma: no cover
+    def throw(
+        self, exception_type: Any, value: Any = None, traceback: Any = None
+    ) -> None:  # pragma: no cover
         pass
 
     def close(self) -> None:  # pragma: no cover
         pass
 
     @staticmethod
-    def sync_option(flags: Dict[str, bool], args, kwargs, transformer, wrapped_coroutine: CoroutineClass, tilde_syntax: bool) -> None:
-        if not flags.get('used', False):
+    def sync_option(
+        flags: Dict[str, bool],
+        param_spec: ParamSpecContainer[P],
+        transformer: FunctionTransformer[P, R],
+        wrapped_coroutine: Coroutine[Any, Any, R],
+        tilde_syntax: bool,
+    ) -> Optional[R]:
+        if not flags.get("used", False):
             wrapped_coroutine.close()
             if not tilde_syntax:
-                return transformer.get_usual_function()(*args, **kwargs)
+                return transformer.get_usual_function()(
+                    *param_spec.args, **param_spec.kwargs
+                )
             else:
-                raise NotImplementedError(f'The tilde-syntax is enabled for the "{transformer.function.__name__}" function. Call it like this: ~{transformer.function.__name__}().')
+                raise NotImplementedError(
+                    f'The tilde-syntax is enabled for the "{transformer.function.__name__}" function. Call it like this: ~{transformer.function.__name__}().'
+                )
+        return None
 
     @staticmethod
-    async def async_option(flags: Dict[str, bool], args, kwargs, transformer) -> None:
-        flags['used'] = True
-        return await transformer.get_async_function()(*args, **kwargs)
+    async def async_option(
+        flags: Dict[str, bool], param_spec: ParamSpecContainer[P], transformer
+    ) -> R:
+        flags["used"] = True
+        return await transformer.get_async_function()(
+            *param_spec.args, **param_spec.kwargs
+        )
 
 
 not_display(UsageTracer)
 
-def superfunction(*args: Callable, tilde_syntax: bool = True):
-    def decorator(function):
+
+@overload
+def superfunction(func: Callable[P, R]) -> Callable[P, UsageTracer[P, R]]: ...
+
+
+@overload
+def superfunction(
+    *, tilde_syntax: bool = True
+) -> Callable[[Callable[P, R]], Callable[P, UsageTracer[P, R]]]: ...
+
+
+def superfunction(
+    func: Optional[Callable] = None, *, tilde_syntax: bool = True
+) -> Union[
+    Callable[P, UsageTracer[P, R]],
+    Callable[[Callable[P, R]], Callable[P, UsageTracer[P, R]]],
+]:
+    def decorator(function: Callable[P, R]) -> Callable[P, UsageTracer[P, R]]:
+        current_frame = currentframe()
+        if current_frame is None or current_frame.f_back is None:
+            raise AmbiguousFrameSyntaxError(
+                "No stack frame found. This is likely due to calling this code from dynamically evaluated contexts."
+            )
+
         transformer = FunctionTransformer(
             function,
-            currentframe().f_back.f_lineno,
-            'superfunction',
+            current_frame.f_back.f_lineno,
+            "superfunction",
         )
 
         if not tilde_syntax:
+
             class NoReturns(NodeTransformer):
                 def visit_Return(self, node: Return) -> Optional[Union[AST, List[AST]]]:
-                    raise WrongTransfunctionSyntaxError('A superfunction cannot contain a return statement.')
+                    raise WrongTransfunctionSyntaxError(
+                        "A superfunction cannot contain a return statement."
+                    )
+
             transformer.get_usual_function(addictional_transformers=[NoReturns()])
 
         @wraps(function)
-        def wrapper(*args, **kwargs):
-            return UsageTracer(args, kwargs, transformer, tilde_syntax)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> UsageTracer[P, R]:
+            return UsageTracer(
+                ParamSpecContainer(*args, **kwargs), transformer, tilde_syntax
+            )
 
-        wrapper.__is_superfunction__ = True
+        setattr(wrapper, "__is_superfunction__", True)
 
         return wrapper
 
-    if args:
-        return decorator(args[0])
+    if func is not None:
+        return decorator(func)
+
     return decorator
