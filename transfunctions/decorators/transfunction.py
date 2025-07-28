@@ -5,11 +5,13 @@ from transfunctions.errors import AmbiguousFrameSyntaxError
 from transfunctions.transformer import FunctionTransformer
 from transfunctions.typing_compat import Callable, ParamSpec
 
-R = TypeVar("R")
+ReturnType = TypeVar("ReturnType")
 P = ParamSpec("P")
 
 
-def transfunction(function: Callable[P, R]) -> FunctionTransformer[P, R]:
+def transfunction(
+    function: Callable[P, ReturnType],
+) -> FunctionTransformer[P, ReturnType]:
 
     current_frame = currentframe()
 
