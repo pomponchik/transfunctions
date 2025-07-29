@@ -18,7 +18,7 @@ from ast import (
     increment_lineno,
     parse,
 )
-from collections.abc import Callable, Generator
+from collections.abc import Generator
 from functools import update_wrapper, wraps
 from inspect import getfile, getsource, iscoroutinefunction, isfunction
 from sys import version_info
@@ -33,7 +33,7 @@ from transfunctions.errors import (
     DualUseOfDecoratorError,
     WrongDecoratorSyntaxError,
 )
-from transfunctions.typing_compat import Coroutine, ParamSpec
+from transfunctions.typing_compat import Coroutine, ParamSpec, Callable
 
 P = ParamSpec("P")
 R = TypeVar("R")
