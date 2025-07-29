@@ -1,4 +1,3 @@
-from transfunctions.decorators.superfunction import superfunction as superfunction
 from transfunctions.decorators.transfunction import transfunction as transfunction
 from transfunctions.decorators.superfunction import superfunction as superfunction
 
