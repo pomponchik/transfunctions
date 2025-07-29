@@ -1,4 +1,5 @@
 import sys
+from typing import TypeVar
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -15,4 +16,8 @@ if sys.version_info <= (3, 9):
 else:
     from collections.abc import Callable, Coroutine, Generator
 
-__all__ = ("ParamSpec", "TypeAlias", "Callable", "Coroutine", "Generator")
+
+ReturnType = TypeVar("ReturnType")
+FunctionParams = ParamSpec("FunctionParams")
+
+__all__ = ("ParamSpec", "TypeAlias", "Callable", "Coroutine", "Generator", "ReturnType", "FunctionParams")

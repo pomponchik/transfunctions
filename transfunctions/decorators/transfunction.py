@@ -1,17 +1,13 @@
 from inspect import currentframe
-from typing import TypeVar
 
 from transfunctions.errors import AmbiguousFrameSyntaxError
 from transfunctions.transformer import FunctionTransformer
-from transfunctions.typing_compat import Callable, ParamSpec
-
-ReturnType = TypeVar("ReturnType")
-P = ParamSpec("P")
+from transfunctions._typing import Callable, FunctionParams, ReturnType
 
 
 def transfunction(
-    function: Callable[P, ReturnType],
-) -> FunctionTransformer[P, ReturnType]:
+    function: Callable[FunctionParams, ReturnType],
+) -> FunctionTransformer[FunctionParams, ReturnType]:
 
     current_frame = currentframe()
 

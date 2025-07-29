@@ -22,7 +22,7 @@ from functools import update_wrapper, wraps
 from inspect import getfile, getsource, iscoroutinefunction, isfunction
 from sys import version_info
 from types import FunctionType, MethodType
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, cast
+from typing import Any, Dict, Generic, List, Optional, Union, cast
 
 from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
 
@@ -32,15 +32,12 @@ from transfunctions.errors import (
     DualUseOfDecoratorError,
     WrongDecoratorSyntaxError,
 )
-from transfunctions.typing_compat import Coroutine, ParamSpec, Callable, Generator
-
-P = ParamSpec("P")
-R = TypeVar("R")
+from transfunctions._typing import Coroutine, Callable, Generator, FunctionParams, ReturnType
 
 
-class FunctionTransformer(Generic[P, R]):
+class FunctionTransformer(Generic[FunctionParams, ReturnType]):
     def __init__(
-        self, function: Callable[P, R], decorator_lineno: int, decorator_name: str
+        self, function: Callable[FunctionParams, ReturnType], decorator_lineno: int, decorator_name: str
     ) -> None:
         if isinstance(function, type(self)):
             raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
@@ -70,10 +67,10 @@ class FunctionTransformer(Generic[P, R]):
         lambda_example = lambda: 0  # noqa: E731
         return isinstance(function, type(lambda_example)) and function.__name__ == lambda_example.__name__
 
-    def get_usual_function(self, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[P, R]:
+    def get_usual_function(self, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[FunctionParams, ReturnType]:
         return self.extract_context('sync_context', addictional_transformers=addictional_transformers)
 
-    def get_async_function(self) -> Callable[P, Coroutine[Any, Any, R]]:
+    def get_async_function(self) -> Callable[FunctionParams, Coroutine[Any, Any, ReturnType]]:
         original_function = self.function
 
         class ConvertSyncFunctionToAsync(NodeTransformer):
@@ -111,7 +108,7 @@ class FunctionTransformer(Generic[P, R]):
             ],
         )
 
-    def get_generator_function(self) -> Callable[P, Generator[R, None, None]]:
+    def get_generator_function(self) -> Callable[FunctionParams, Generator[ReturnType, None, None]]:
         return self.extract_context('generator_context')
 
     @staticmethod
@@ -147,12 +144,10 @@ class FunctionTransformer(Generic[P, R]):
         class RewriteContexts(NodeTransformer):
             def visit_With(self, node: With) -> Optional[Union[AST, List[AST]]]:
                 if len(node.items) == 1:
-                    if isinstance(expr := node.items[0].context_expr, Name):
-                        context_expr = expr
-                    elif isinstance(
-                        expr := node.items[0].context_expr, Call
-                    ) and isinstance(expr.func, ast.Name):
-                        context_expr = expr.func
+                    if isinstance(node.items[0].context_expr, Name):
+                        context_expr = node.items[0].context_expr
+                    elif isinstance(node.items[0].context_expr, Call) and isinstance(node.items[0].context_expr.func, ast.Name):
+                        context_expr = node.items[0].context_expr.func
 
                     if context_expr.id == context_name:
                         return cast(List[AST], node.body)

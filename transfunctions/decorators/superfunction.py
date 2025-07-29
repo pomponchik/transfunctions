@@ -2,7 +2,7 @@ import weakref
 from ast import AST, NodeTransformer, Return
 from functools import wraps
 from inspect import currentframe
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, overload
+from typing import Any, Dict, Generic, List, Optional, Union, overload
 
 from displayhooks import not_display
 
@@ -11,23 +11,19 @@ from transfunctions.errors import (
     WrongTransfunctionSyntaxError,
 )
 from transfunctions.transformer import FunctionTransformer
-from transfunctions.typing_compat import Callable, Coroutine, ParamSpec, Generator
+from transfunctions._typing import Callable, Coroutine, ReturnType, FunctionParams, Generator
 
-R = TypeVar("R")
-P = ParamSpec("P")
-
-
-class ParamSpecContainer(Generic[P]):
-    def __init__(self, *args: P.args, **kwargs: P.kwargs) -> None:
+class ParamSpecContainer(Generic[FunctionParams]):
+    def __init__(self, *args: FunctionParams.args, **kwargs: FunctionParams.kwargs) -> None:
         self.args = args
         self.kwargs = kwargs
 
 
-class UsageTracer(Generic[P, R], Coroutine[Any, None, R]):
+class UsageTracer(Generic[FunctionParams, ReturnType], Coroutine[Any, None, ReturnType]):
     def __init__(
         self,
-        param_spec: ParamSpecContainer[P],
-        transformer: FunctionTransformer[P, R],
+        param_spec: ParamSpecContainer[FunctionParams],
+        transformer: FunctionTransformer[FunctionParams, ReturnType],
         tilde_syntax: bool,
     ) -> None:
         self.flags: Dict[str, bool] = {}
@@ -46,17 +42,17 @@ class UsageTracer(Generic[P, R], Coroutine[Any, None, R]):
             tilde_syntax,
         )
 
-    def __iter__(self) -> Generator[R, None, None]:
-        self.flags["used"] = True
+    def __iter__(self) -> Generator[ReturnType, None, None]:
+        self.flags['used'] = True
         self.coroutine.close()
         generator_function = self.transformer.get_generator_function()
         generator = generator_function(*(self.args), **(self.kwargs))
         yield from generator
 
-    def __await__(self) -> Generator[Any, None, R]:
+    def __await__(self) -> Generator[Any, None, ReturnType]:
         return self.coroutine.__await__()
 
-    def __invert__(self) -> R:
+    def __invert__(self) -> ReturnType:
         if not self.tilde_syntax:
             raise NotImplementedError('The syntax with ~ is disabled for this superfunction. Call it with simple breackets.')
 
@@ -76,11 +72,11 @@ class UsageTracer(Generic[P, R], Coroutine[Any, None, R]):
     @staticmethod
     def sync_option(
         flags: Dict[str, bool],
-        param_spec: ParamSpecContainer[P],
-        transformer: FunctionTransformer[P, R],
-        wrapped_coroutine: Coroutine[Any, Any, R],
+        param_spec: ParamSpecContainer[FunctionParams],
+        transformer: FunctionTransformer[FunctionParams, ReturnType],
+        wrapped_coroutine: Coroutine[Any, Any, ReturnType],
         tilde_syntax: bool,
-    ) -> Optional[R]:
+    ) -> Optional[ReturnType]:
         if not flags.get('used', False):
             wrapped_coroutine.close()
             if not tilde_syntax:
@@ -91,7 +87,7 @@ class UsageTracer(Generic[P, R], Coroutine[Any, None, R]):
 
     @staticmethod
     async def async_option(
-        flags: Dict[str, bool], param_spec: ParamSpecContainer[P], transformer: FunctionTransformer[P, R]) -> R:
+        flags: Dict[str, bool], param_spec: ParamSpecContainer[FunctionParams], transformer: FunctionTransformer[FunctionParams, ReturnType]) -> ReturnType:
         flags['used'] = True
         return await transformer.get_async_function()(*param_spec.args, **param_spec.kwargs)
 
@@ -100,22 +96,22 @@ not_display(UsageTracer)
 
 
 @overload
-def superfunction(func: Callable[P, R]) -> Callable[P, UsageTracer[P, R]]: ...
+def superfunction(function: Callable[FunctionParams, ReturnType]) -> Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]: ...
 
 
 @overload
 def superfunction(
     *, tilde_syntax: bool = True
-) -> Callable[[Callable[P, R]], Callable[P, UsageTracer[P, R]]]: ...
+) -> Callable[[Callable[FunctionParams, ReturnType]], Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]]: ...
 
 
 def superfunction(
-    func: Optional[Callable] = None, *, tilde_syntax: bool = True
+    function: Optional[Callable[FunctionParams, ReturnType]] = None, *, tilde_syntax: bool = True
 ) -> Union[
-    Callable[P, UsageTracer[P, R]],
-    Callable[[Callable[P, R]], Callable[P, UsageTracer[P, R]]],
+    Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]],
+    Callable[[Callable[FunctionParams, ReturnType]], Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]],
 ]:
-    def decorator(function: Callable[P, R]) -> Callable[P, UsageTracer[P, R]]:
+    def decorator(function: Callable[FunctionParams, ReturnType]) -> Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]:
         current_frame = currentframe()
         if current_frame is None or current_frame.f_back is None:
             raise AmbiguousFrameSyntaxError(
@@ -132,21 +128,18 @@ def superfunction(
 
             class NoReturns(NodeTransformer):
                 def visit_Return(self, node: Return) -> Optional[Union[AST, List[AST]]]:
-                    raise WrongTransfunctionSyntaxError(
-                        "A superfunction cannot contain a return statement."
-                    )
-
+                    raise WrongTransfunctionSyntaxError('A superfunction cannot contain a return statement.')
             transformer.get_usual_function(addictional_transformers=[NoReturns()])
 
         @wraps(function)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> UsageTracer[P, R]:
+        def wrapper(*args: FunctionParams.args, **kwargs: FunctionParams.kwargs) -> UsageTracer[FunctionParams, ReturnType]:
             return UsageTracer(ParamSpecContainer(*args, **kwargs), transformer, tilde_syntax)
 
         setattr(wrapper, "__is_superfunction__", True)
 
         return wrapper
 
-    if func is not None:
-        return decorator(func)
+    if function is not None:
+        return decorator(function)
 
     return decorator
