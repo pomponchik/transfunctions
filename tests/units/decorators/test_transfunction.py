@@ -6,7 +6,12 @@ from contextlib import contextmanager
 import pytest
 import full_match
 
-from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError, DualUseOfDecoratorError
+from transfunctions import (
+    transfunction,
+    CallTransfunctionDirectlyError,
+    WrongDecoratorSyntaxError,
+    DualUseOfDecoratorError,
+)
 from transfunctions.transformer import FunctionTransformer
 from transfunctions import async_context, sync_context, generator_context
 
@@ -55,6 +60,7 @@ SOME_GLOBAL = 777
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без, как вне контекстных маркеров, так и внутри.
 """
 
+
 @transfunction
 def null_indentation_function():
     with sync_context:
@@ -76,12 +82,12 @@ def test_result_is_transformer():
 
 
 @pytest.mark.parametrize(
-    ['args', 'kwargs'],
+    ["args", "kwargs"],
     [
         ((), {}),
-        (('lol', 'kek'), {}),
-        (('lol', 'kek'), {'lol': 'kek'}),
-        ((), {'lol': 'kek'}),
+        (("lol", "kek"), {}),
+        (("lol", "kek"), {"lol": "kek"}),
+        ((), {"lol": "kek"}),
     ],
 )
 def test_direct_call_or_transformer(args, kwargs):
@@ -89,19 +95,35 @@ def test_direct_call_or_transformer(args, kwargs):
     def function_maker(*args, **kwargs):
         pass
 
-    with pytest.raises(CallTransfunctionDirectlyError, match=full_match("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")):
+    with pytest.raises(
+        CallTransfunctionDirectlyError,
+        match=full_match(
+            "You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it."
+        ),
+    ):
         function_maker(*args, **kwargs)
 
 
 def test_pass_coroutine_function_to_decorator():
-    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @transfunction. You can't use async functions.")):
+    with pytest.raises(
+        ValueError,
+        match=full_match(
+            "Only regular or generator functions can be used as a template for @transfunction. You can't use async functions."
+        ),
+    ):
+
         @transfunction
         async def function_maker():
             return 4
 
 
 def test_pass_not_function_to_decorator():
-    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @transfunction.")):
+    with pytest.raises(
+        ValueError,
+        match=full_match(
+            "Only regular or generator functions can be used as a template for @transfunction."
+        ),
+    ):
         transfunction(1)
 
 
@@ -168,7 +190,12 @@ def test_create_async_function_with_parameters_without_any_markers():
 
 
 def test_try_to_pass_lambda_to_decorator():
-    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @transfunction. Don't use lambdas here.")):
+    with pytest.raises(
+        ValueError,
+        match=full_match(
+            "Only regular or generator functions can be used as a template for @transfunction. Don't use lambdas here."
+        ),
+    ):
         transfunction(lambda x: x)
 
 
@@ -201,7 +228,7 @@ def test_create_generator_function_with_parameters_without_any_markers():
 def test_traceback_is_working_in_simple_usual_function():
     @transfunction
     def make():
-        raise ValueError('message')
+        raise ValueError("message")
 
     function = make.get_usual_function()
 
@@ -218,7 +245,7 @@ def test_traceback_is_working_in_simple_usual_function():
 def test_traceback_is_working_in_simple_async_function():
     @transfunction
     def make():
-        raise ValueError('message')
+        raise ValueError("message")
 
     function = make.get_async_function()
 
@@ -235,7 +262,7 @@ def test_traceback_is_working_in_simple_async_function():
 def test_traceback_is_working_in_simple_generator_function():
     @transfunction
     def make():
-        raise ValueError('message')
+        raise ValueError("message")
         yield 1
 
     function = make.get_generator_function()
@@ -254,7 +281,7 @@ def test_traceback_is_working_in_usual_function_with_marker():
     @transfunction
     def make():
         with sync_context:
-            raise ValueError('message')
+            raise ValueError("message")
 
     function = make.get_usual_function()
 
@@ -272,7 +299,7 @@ def test_traceback_is_working_in_simple_async_function_with_marker():
     @transfunction
     def make():
         with async_context:
-            raise ValueError('message')
+            raise ValueError("message")
 
     function = make.get_async_function()
 
@@ -290,7 +317,7 @@ def test_traceback_is_working_in_simple_generator_function_with_marker():
     @transfunction
     def make():
         with generator_context:
-            raise ValueError('message')
+            raise ValueError("message")
             yield 1
 
     function = make.get_generator_function()
@@ -308,17 +335,28 @@ def test_traceback_is_working_in_simple_generator_function_with_marker():
 def test_try_to_use_transfunction_decorator_without_at_sign():
     def function():
         with generator_context:
-            raise ValueError('message')
+            raise ValueError("message")
             yield 1
 
     make = transfunction(function)
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+    with pytest.raises(
+        WrongDecoratorSyntaxError,
+        match=full_match(
+            "The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it."
+        ),
+    ):
         function = make.get_generator_function()
 
 
 def test_double_use_of_decorator():
-    with pytest.raises(DualUseOfDecoratorError, match=full_match("You cannot use the 'transfunction' decorator twice for the same function.")):
+    with pytest.raises(
+        DualUseOfDecoratorError,
+        match=full_match(
+            "You cannot use the 'transfunction' decorator twice for the same function."
+        ),
+    ):
+
         @transfunction
         @transfunction
         def make():
@@ -330,7 +368,7 @@ def test_read_closures_with_usual_function():
 
     @transfunction
     def make():
-        #nonlocal nonlocal_variable
+        # nonlocal nonlocal_variable
         return nonlocal_variable
 
     function = make.get_usual_function()
@@ -343,7 +381,7 @@ def test_read_closures_with_usual_function_with_arguments():
 
     @transfunction
     def make(some_number):
-        #nonlocal nonlocal_variable
+        # nonlocal nonlocal_variable
         return nonlocal_variable + some_number
 
     function = make.get_usual_function()
@@ -357,7 +395,7 @@ def test_read_closures_with_async_function():
 
     @transfunction
     def make():
-        #nonlocal nonlocal_variable
+        # nonlocal nonlocal_variable
         return nonlocal_variable
 
     function = make.get_async_function()
@@ -370,7 +408,7 @@ def test_read_closures_with_async_function_with_arguments():
 
     @transfunction
     def make(some_number):
-        #nonlocal nonlocal_variable
+        # nonlocal nonlocal_variable
         return nonlocal_variable + some_number
 
     function = make.get_async_function()
@@ -384,7 +422,7 @@ def test_read_closures_with_generator_function():
 
     @transfunction
     def make():
-        #nonlocal nonlocal_variable
+        # nonlocal nonlocal_variable
         yield nonlocal_variable
 
     function = make.get_generator_function()
@@ -397,7 +435,7 @@ def test_read_closures_with_generator_function_with_arguments():
 
     @transfunction
     def make(some_number):
-        #nonlocal nonlocal_variable
+        # nonlocal nonlocal_variable
         yield nonlocal_variable + some_number
 
     function = make.get_generator_function()
@@ -419,7 +457,7 @@ def test_read_globals_with_usual_function():
 def test_read_globals_with_usual_function_with_arguments():
     @transfunction
     def make(some_number):
-        #nonlocal nonlocal_variable
+        # nonlocal nonlocal_variable
         return SOME_GLOBAL + some_number
 
     function = make.get_usual_function()
@@ -675,6 +713,7 @@ def test_module_name():
 def test_it_works_with_simple_usual_method():
     class SomeClass:
         some_value = 1
+
         @transfunction
         def template(self):
             return self.some_value + 1
@@ -688,6 +727,7 @@ def test_it_works_with_simple_usual_method():
 def test_it_works_with_simple_usual_method_with_parameters():
     class SomeClass:
         some_value = 1
+
         @transfunction
         def template(self, a, b=5):
             return self.some_value + 1 + a + b
@@ -701,6 +741,7 @@ def test_it_works_with_simple_usual_method_with_parameters():
 def test_it_works_with_simple_async_method():
     class SomeClass:
         some_value = 1
+
         @transfunction
         def template(self):
             return self.some_value + 1
@@ -714,6 +755,7 @@ def test_it_works_with_simple_async_method():
 def test_it_works_with_simple_async_method_with_parameters():
     class SomeClass:
         some_value = 1
+
         @transfunction
         def template(self, a, b=5):
             return self.some_value + 1 + a + b
@@ -727,6 +769,7 @@ def test_it_works_with_simple_async_method_with_parameters():
 def test_it_works_with_simple_generator_method():
     class SomeClass:
         some_value = 1
+
         @transfunction
         def template(self):
             yield self.some_value + 1
@@ -740,6 +783,7 @@ def test_it_works_with_simple_generator_method():
 def test_it_works_with_simple_generator_method_with_parameters():
     class SomeClass:
         some_value = 1
+
         @transfunction
         def template(self, a, b=5):
             yield self.some_value + 1 + a + b
@@ -759,7 +803,12 @@ def test_combine_with_other_decorator_before():
     def template():
         pass
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @transfunction decorator cannot be used in conjunction with other decorators.')):
+    with pytest.raises(
+        WrongDecoratorSyntaxError,
+        match=full_match(
+            "The @transfunction decorator cannot be used in conjunction with other decorators."
+        ),
+    ):
         template.get_usual_function()
 
 
@@ -772,7 +821,12 @@ def test_combine_with_other_decorator_after():
     def template():
         pass
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @transfunction decorator cannot be used in conjunction with other decorators.')):
+    with pytest.raises(
+        WrongDecoratorSyntaxError,
+        match=full_match(
+            "The @transfunction decorator cannot be used in conjunction with other decorators."
+        ),
+    ):
         template.get_usual_function()
 
 

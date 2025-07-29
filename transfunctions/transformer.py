@@ -44,21 +44,13 @@ class FunctionTransformer(Generic[P, R]):
         self, function: Callable[P, R], decorator_lineno: int, decorator_name: str
     ) -> None:
         if isinstance(function, type(self)):
-            raise DualUseOfDecoratorError(
-                f"You cannot use the '{decorator_name}' decorator twice for the same function."
-            )
+            raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
         if not isfunction(function):
-            raise ValueError(
-                f"Only regular or generator functions can be used as a template for @{decorator_name}."
-            )
+            raise ValueError(f"Only regular or generator functions can be used as a template for @{decorator_name}.")
         if iscoroutinefunction(function):
-            raise ValueError(
-                f"Only regular or generator functions can be used as a template for @{decorator_name}. You can't use async functions."
-            )
+            raise ValueError(f"Only regular or generator functions can be used as a template for @{decorator_name}. You can't use async functions.")
         if self.is_lambda(function):
-            raise ValueError(
-                f"Only regular or generator functions can be used as a template for @{decorator_name}. Don't use lambdas here."
-            )
+            raise ValueError(f"Only regular or generator functions can be used as a template for @{decorator_name}. Don't use lambdas here.")
 
         self.function = function
         self.decorator_lineno = decorator_lineno
@@ -67,9 +59,7 @@ class FunctionTransformer(Generic[P, R]):
         self.cache: Dict[str, Callable] = {}
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
-        raise CallTransfunctionDirectlyError(
-            "You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it."
-        )
+        raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
 
     def __get__(self, base_object, type=None):
         self.base_object = base_object
@@ -79,25 +69,18 @@ class FunctionTransformer(Generic[P, R]):
     def is_lambda(function: Callable) -> bool:
         # https://stackoverflow.com/a/3655857/14522393
         lambda_example = lambda: 0  # noqa: E731
-        return (
-            isinstance(function, type(lambda_example))
-            and function.__name__ == lambda_example.__name__
-        )
+        return isinstance(function, type(lambda_example)) and function.__name__ == lambda_example.__name__
 
-    def get_usual_function(
-        self, addictional_transformers: Optional[List[NodeTransformer]] = None
-    ) -> Callable[P, R]:
+    def get_usual_function(self, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[P, R]:
         return self.extract_context(
-            "sync_context", addictional_transformers=addictional_transformers
+            'sync_context', addictional_transformers=addictional_transformers
         )
 
     def get_async_function(self) -> Callable[P, Coroutine[Any, Any, R]]:
         original_function = self.function
 
         class ConvertSyncFunctionToAsync(NodeTransformer):
-            def visit_FunctionDef(
-                self, node: FunctionDef
-            ) -> Optional[Union[AST, List[AST]]]:
+            def visit_FunctionDef(self, node: FunctionDef) -> Optional[Union[AST, List[AST]]]:
                 if node.name == original_function.__name__:
                     return AsyncFunctionDef(
                         name=original_function.__name__,
@@ -124,7 +107,7 @@ class FunctionTransformer(Generic[P, R]):
                 return node
 
         return self.extract_context(
-            "async_context",
+            'async_context',
             addictional_transformers=[
                 ConvertSyncFunctionToAsync(),
                 ExtractAwaitExpressions(),
@@ -132,11 +115,11 @@ class FunctionTransformer(Generic[P, R]):
         )
 
     def get_generator_function(self) -> Callable[P, Generator[R, None, None]]:
-        return self.extract_context("generator_context")
+        return self.extract_context('generator_context')
 
     @staticmethod
     def clear_spaces_from_source_code(source_code: str) -> str:
-        splitted_source_code = source_code.split("\n")
+        splitted_source_code = source_code.split('\n')
 
         indent = 0
         for letter in splitted_source_code[0]:
@@ -147,13 +130,10 @@ class FunctionTransformer(Generic[P, R]):
 
         new_splitted_source_code = [x[indent:] for x in splitted_source_code]
 
-        return "\n".join(new_splitted_source_code)
+        return '\n'.join(new_splitted_source_code)
 
-    def extract_context(
-        self,
-        context_name: str,
-        addictional_transformers: Optional[List[NodeTransformer]] = None,
-    ):
+
+    def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None):
         if context_name in self.cache:
             return self.cache[context_name]
         try:
@@ -180,25 +160,21 @@ class FunctionTransformer(Generic[P, R]):
                     if context_expr.id == context_name:
                         return cast(List[AST], node.body)
                     if context_expr.id != context_name and context_expr.id in (
-                        "async_context",
-                        "sync_context",
-                        "generator_context",
+                        'async_context',
+                        'sync_context',
+                        'generator_context',
                     ):
                         return None
                 return node
 
         class DeleteDecorator(NodeTransformer):
-            def visit_FunctionDef(
-                self, node: FunctionDef
-            ) -> Optional[Union[AST, List[AST]]]:
+            def visit_FunctionDef(self, node: FunctionDef) -> Optional[Union[AST, List[AST]]]:
                 if node.name == original_function.__name__:
                     nonlocal transfunction_decorator
                     transfunction_decorator = None
 
                     if not node.decorator_list:
-                        raise WrongDecoratorSyntaxError(
-                            f"The @{decorator_name} decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it."
-                        )
+                        raise WrongDecoratorSyntaxError(f"The @{decorator_name} decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")
 
                     for decorator in node.decorator_list:
                         if isinstance(decorator, Call):
@@ -208,14 +184,10 @@ class FunctionTransformer(Generic[P, R]):
                             isinstance(decorator, Name)
                             and decorator.id != decorator_name
                         ):
-                            raise WrongDecoratorSyntaxError(
-                                f"The @{decorator_name} decorator cannot be used in conjunction with other decorators."
-                            )
+                            raise WrongDecoratorSyntaxError(f"The @{decorator_name} decorator cannot be used in conjunction with other decorators.")
                         else:
                             if transfunction_decorator is not None:
-                                raise DualUseOfDecoratorError(
-                                    f"You cannot use the '{decorator_name}' decorator twice for the same function."
-                                )
+                                raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
                             transfunction_decorator = decorator
 
                     node.decorator_list = []
@@ -252,10 +224,10 @@ class FunctionTransformer(Generic[P, R]):
                 tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1)
             )
 
-        code = compile(tree, filename=getfile(self.function), mode="exec")
+        code = compile(tree, filename=getfile(self.function), mode='exec')
         namespace: Dict[str, Callable] = {}
         exec(code, namespace)
-        function_factory = namespace["wrapper"]
+        function_factory = namespace['wrapper']
         result = function_factory()
         result = self.rewrite_globals_and_closure(result)
         result = wraps(self.function)(result)
@@ -274,21 +246,10 @@ class FunctionTransformer(Generic[P, R]):
         old_functiondef = tree.body[0]
 
         tree.body[0] = FunctionDef(
-            name="wrapper",
-            body=[
-                Assign(
-                    targets=[Name(id=name, ctx=Store(), col_offset=0)],
-                    value=Constant(value=None, col_offset=0),
-                    col_offset=0,
-                )
-                for name in self.function.__code__.co_freevars
-            ]
-            + [
+            name='wrapper',
+            body=[Assign(targets=[Name(id=name, ctx=Store(), col_offset=0)], value=Constant(value=None, col_offset=0), col_offset=0) for name in self.function.__code__.co_freevars] + [
                 old_functiondef,
-                Return(
-                    value=Name(id=self.function.__name__, ctx=Load(), col_offset=0),
-                    col_offset=0,
-                ),
+                Return(value=Name(id=self.function.__name__, ctx=Load(), col_offset=0), col_offset=0),
             ],
             col_offset=0,
             args=arguments(
@@ -303,31 +264,15 @@ class FunctionTransformer(Generic[P, R]):
 
         return tree
 
+
     def rewrite_globals_and_closure(self, function):
         # https://stackoverflow.com/a/13503277/14522393
         all_new_closure_names = set(self.function.__code__.co_freevars)
 
         if self.function.__closure__ is not None:
-            old_function_closure_variables = {
-                name: cell
-                for name, cell in zip(
-                    self.function.__code__.co_freevars, self.function.__closure__
-                )
-            }
-            filtered_closure = tuple(
-                [
-                    cell
-                    for name, cell in old_function_closure_variables.items()
-                    if name in all_new_closure_names
-                ]
-            )
-            names = tuple(
-                [
-                    name
-                    for name, cell in old_function_closure_variables.items()
-                    if name in all_new_closure_names
-                ]
-            )
+            old_function_closure_variables = {name: cell for name, cell in zip(self.function.__code__.co_freevars, self.function.__closure__)}
+            filtered_closure = tuple([cell for name, cell in old_function_closure_variables.items() if name in all_new_closure_names])
+            names = tuple([name for name, cell in old_function_closure_variables.items() if name in all_new_closure_names])
             new_code = function.__code__.replace(co_freevars=names)
         else:
             filtered_closure = None

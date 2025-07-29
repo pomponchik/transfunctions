@@ -59,20 +59,16 @@ class UsageTracer(Generic[P, R], Coroutine[Any, None, R]):
 
     def __invert__(self) -> R:
         if not self.tilde_syntax:
-            raise NotImplementedError(
-                "The syntax with ~ is disabled for this superfunction. Call it with simple breackets."
-            )
+            raise NotImplementedError('The syntax with ~ is disabled for this superfunction. Call it with simple breackets.')
 
-        self.flags["used"] = True
+        self.flags['used'] = True
         self.coroutine.close()
         return self.transformer.get_usual_function()(*(self.args), **(self.kwargs))
 
     def send(self, value: Any) -> Any:
         return self.coroutine.send(value)
 
-    def throw(
-        self, exception_type: Any, value: Any = None, traceback: Any = None
-    ) -> None:  # pragma: no cover
+    def throw(self, exception_type: Any, value: Any = None, traceback: Any = None) -> None:  # pragma: no cover
         pass
 
     def close(self) -> None:  # pragma: no cover
@@ -86,26 +82,19 @@ class UsageTracer(Generic[P, R], Coroutine[Any, None, R]):
         wrapped_coroutine: Coroutine[Any, Any, R],
         tilde_syntax: bool,
     ) -> Optional[R]:
-        if not flags.get("used", False):
+        if not flags.get('used', False):
             wrapped_coroutine.close()
             if not tilde_syntax:
-                return transformer.get_usual_function()(
-                    *param_spec.args, **param_spec.kwargs
-                )
+                return transformer.get_usual_function()(*param_spec.args, **param_spec.kwargs)
             else:
-                raise NotImplementedError(
-                    f'The tilde-syntax is enabled for the "{transformer.function.__name__}" function. Call it like this: ~{transformer.function.__name__}().'
-                )
+                raise NotImplementedError(f'The tilde-syntax is enabled for the "{transformer.function.__name__}" function. Call it like this: ~{transformer.function.__name__}().')
         return None
 
     @staticmethod
     async def async_option(
-        flags: Dict[str, bool], param_spec: ParamSpecContainer[P], transformer
-    ) -> R:
-        flags["used"] = True
-        return await transformer.get_async_function()(
-            *param_spec.args, **param_spec.kwargs
-        )
+        flags: Dict[str, bool], param_spec: ParamSpecContainer[P], transformer: FunctionTransformer[P, R]) -> R:
+        flags['used'] = True
+        return await transformer.get_async_function()(*param_spec.args, **param_spec.kwargs)
 
 
 not_display(UsageTracer)
@@ -152,9 +141,7 @@ def superfunction(
 
         @wraps(function)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> UsageTracer[P, R]:
-            return UsageTracer(
-                ParamSpecContainer(*args, **kwargs), transformer, tilde_syntax
-            )
+            return UsageTracer(ParamSpecContainer(*args, **kwargs), transformer, tilde_syntax)
 
         setattr(wrapper, "__is_superfunction__", True)
 
