@@ -71,9 +71,7 @@ class FunctionTransformer(Generic[P, R]):
         return isinstance(function, type(lambda_example)) and function.__name__ == lambda_example.__name__
 
     def get_usual_function(self, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[P, R]:
-        return self.extract_context(
-            'sync_context', addictional_transformers=addictional_transformers
-        )
+        return self.extract_context('sync_context', addictional_transformers=addictional_transformers)
 
     def get_async_function(self) -> Callable[P, Coroutine[Any, Any, R]]:
         original_function = self.function
