@@ -17,7 +17,7 @@ else:
     from collections.abc import Callable, Coroutine, Generator
 
 
-ReturnType = TypeVar("ReturnType")
-FunctionParams = ParamSpec("FunctionParams")
+ReturnType = TypeVar('ReturnType')
+FunctionParams = ParamSpec('FunctionParams')
 
-__all__ = ("ParamSpec", "TypeAlias", "Callable", "Coroutine", "Generator", "ReturnType", "FunctionParams")
+__all__ = ('ParamSpec', 'TypeAlias', 'Callable', 'Coroutine', 'Generator', 'ReturnType', 'FunctionParams')

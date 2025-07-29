@@ -90,7 +90,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
         class ExtractAwaitExpressions(NodeTransformer):
             def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
-                if isinstance(node.func, ast.Name) and node.func.id == "await_it":
+                if isinstance(node.func, ast.Name) and node.func.id == 'await_it':
                     return Await(
                         value=node.args[0],
                         lineno=node.lineno,
@@ -176,7 +176,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                             isinstance(decorator, Name)
                             and decorator.id != decorator_name
                         ):
-                            raise WrongDecoratorSyntaxError(f"The @{decorator_name} decorator cannot be used in conjunction with other decorators.")
+                            raise WrongDecoratorSyntaxError(f'The @{decorator_name} decorator cannot be used in conjunction with other decorators.')
                         else:
                             if transfunction_decorator is not None:
                                 raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
