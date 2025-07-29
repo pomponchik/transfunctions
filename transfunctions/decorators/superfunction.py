@@ -1,6 +1,5 @@
 import weakref
 from ast import AST, NodeTransformer, Return
-from collections.abc import Generator
 from functools import wraps
 from inspect import currentframe
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, overload
@@ -12,7 +11,7 @@ from transfunctions.errors import (
     WrongTransfunctionSyntaxError,
 )
 from transfunctions.transformer import FunctionTransformer
-from transfunctions.typing_compat import Callable, Coroutine, ParamSpec
+from transfunctions.typing_compat import Callable, Coroutine, ParamSpec, Generator
 
 R = TypeVar("R")
 P = ParamSpec("P")
