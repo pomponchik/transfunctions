@@ -11,8 +11,8 @@ else:
     from typing import TypeAlias
 
 if sys.version_info <= (3, 9):
-    from typing import Callable, Coroutine
+    from typing import Callable, Coroutine, Generator
 else:
-    from collections.abc import Callable, Coroutine
+    from collections.abc import Callable, Coroutine, Generator
 
-__all__ = ("ParamSpec", "TypeAlias", "Callable", "Coroutine")
+__all__ = ("ParamSpec", "TypeAlias", "Callable", "Coroutine", "Generator")
