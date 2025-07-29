@@ -151,11 +151,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
                     if context_expr.id == context_name:
                         return cast(List[AST], node.body)
-                    if context_expr.id != context_name and context_expr.id in (
-                        'async_context',
-                        'sync_context',
-                        'generator_context',
-                    ):
+                    if context_expr.id != context_name and context_expr.id in ('async_context', 'sync_context', 'generator_context'):
                         return None
                 return node
 
@@ -208,13 +204,9 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         tree = self.wrap_ast_by_closures(tree)
 
         if version_info.minor > 10:
-            increment_lineno(
-                tree, n=(self.decorator_lineno - transfunction_decorator.lineno)
-            )
+            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno))
         else:
-            increment_lineno(
-                tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1)
-            )
+            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1))
 
         code = compile(tree, filename=getfile(self.function), mode='exec')
         namespace: Dict[str, Callable] = {}
