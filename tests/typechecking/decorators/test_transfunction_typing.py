@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 import sys
+from contextlib import suppress
 
 if sys.version_info <= (3, 11):
     from typing_extensions import reveal_type
@@ -39,6 +40,23 @@ def test_transfunction_param_spec_fail_on_incorrect_arg_type_sync():
 def test_transfunction_param_spec_fail_on_incorrect_kwarg_type_sync():
     typed_transfunction.get_usual_function()(1.0, kwarg=None) # E: Argument "kwarg" has incompatible type "None"; expected "int"
 
+@pytest.mark.mypy_testing
+def test_transfunction_param_spec_fail_on_missing_args_sync():
+    with suppress(TypeError):
+        typed_transfunction.get_usual_function()() # E: Too few arguments
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+def test_transfunction_param_spec_fail_on_extra_args_sync():
+    with suppress(TypeError):
+        typed_transfunction.get_usual_function()(1.0, 2.0, kwarg=1)
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+def test_transfunction_param_spec_fail_on_extra_kwargs_sync():
+    with suppress(TypeError):
+        typed_transfunction.get_usual_function()(1.0, kwarg=1, kwarg2=1)
+
 
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_on_correct_args_types_sync():
@@ -54,6 +72,23 @@ def test_transfunction_param_spec_fail_on_incorrect_arg_type_async():
 def test_transfunction_param_spec_fail_on_incorrect_kwarg_type_async():
     asyncio.run(typed_transfunction.get_async_function()(1.0, kwarg=None)) # E: Argument "kwarg" has incompatible type "None"; expected "int"
 
+
+@pytest.mark.mypy_testing
+def test_transfunction_param_spec_fail_on_missing_args_async():
+    with suppress(TypeError):
+        asyncio.run(typed_transfunction.get_async_function()()) # E: Too few arguments
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+def test_transfunction_param_spec_fail_on_extra_args_async():
+    with suppress(TypeError):
+        asyncio.run(typed_transfunction.get_usual_function()(1.0, 2.0, kwarg=1))
+
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+def test_transfunction_param_spec_fail_on_extra_kwargs_async():
+    with suppress(TypeError):
+        asyncio.run(typed_transfunction.get_usual_function()(1.0, kwarg=1, kwarg2=1))
 
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_on_correct_args_types_async():
