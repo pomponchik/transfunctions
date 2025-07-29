@@ -1,7 +1,12 @@
 
 import pytest
 import asyncio
-from typing import reveal_type
+import sys
+
+if sys.version_info <= (3, 11):
+    from typing_extensions import reveal_type
+else:
+    from typing import reveal_type
 
 from transfunctions import superfunction, sync_context, async_context
 
