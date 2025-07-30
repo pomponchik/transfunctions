@@ -53,6 +53,11 @@ keywords = [
 paths_to_mutate="transfunctions"
 runner="pytest"
 
+[tool.pytest.ini_options]
+markers = [
+    "mypy_testing",
+]
+
 [project.urls]
 'Source' = 'https://github.com/pomponchik/transfunctions'
 'Tracker' = 'https://github.com/pomponchik/transfunctions/issues'
