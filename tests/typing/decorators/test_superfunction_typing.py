@@ -9,7 +9,7 @@ else:
 
 import pytest
 
-from transfunctions import superfunction, sync_context, async_context
+from transfunctions import superfunction, sync_context, async_context, generator_context
 
 
 @superfunction
@@ -18,7 +18,8 @@ def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         return 1
     with async_context:
         return 2
-    # TODO: add test case for generator_context once there is a typing solution
+    with generator_context:
+        yield from [1, 2, 3]
 
 
 @pytest.mark.mypy_testing
@@ -99,3 +100,8 @@ def test_superfunction_param_spec_fail_on_extra_args_async():
 def test_superfunction_param_spec_fail_on_extra_kwargs_async():
     with suppress(TypeError):
         asyncio.run(typed_superfunction(1.0, kwarg=1, kwarg2=1))
+
+
+@pytest.mark.mypy_testing
+def test_simple_using_of_generator():
+    list(typed_superfunction(1))
