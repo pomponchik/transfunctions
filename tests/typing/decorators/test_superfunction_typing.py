@@ -66,11 +66,13 @@ def test_superfunction_param_spec_fail_on_missing_args_sync():
     with suppress(TypeError):
         ~typed_superfunction() # E: Missing positional argument "arg" in call to "typed_superfunction"  [call-arg]
 
+
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_args_sync():
     with suppress(TypeError):
         ~typed_superfunction(1.0, 2.0, kwarg=1)
+
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
@@ -84,11 +86,13 @@ def test_superfunction_param_spec_fail_on_missing_args_async():
     with suppress(TypeError):
         asyncio.run(typed_superfunction()) # E: Missing positional argument "arg" in call to "typed_superfunction"  [call-arg]
 
+
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_args_async():
     with suppress(TypeError):
         asyncio.run(typed_superfunction(1.0, 2.0, kwarg=1))
+
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
