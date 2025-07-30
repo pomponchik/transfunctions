@@ -4,15 +4,15 @@ from typing import TypeVar
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
 else:
-    from typing_extensions import ParamSpec
+    from typing_extensions import ParamSpec  # pragma: no cover
 
 if sys.version_info <= (3, 10):
-    from typing_extensions import TypeAlias
+    from typing_extensions import TypeAlias  # pragma: no cover
 else:
     from typing import TypeAlias
 
 if sys.version_info <= (3, 9):
-    from typing import Callable, Coroutine, Generator
+    from typing import Callable, Coroutine, Generator  # pragma: no cover
 else:
     from collections.abc import Callable, Coroutine, Generator
 
