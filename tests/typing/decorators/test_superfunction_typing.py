@@ -1,13 +1,13 @@
-
-import pytest
-import asyncio
 import sys
+import asyncio
 from contextlib import suppress
 
 if sys.version_info <= (3, 11):
     from typing_extensions import reveal_type
 else:
     from typing import reveal_type
+
+import pytest
 
 from transfunctions import superfunction, sync_context, async_context
 
@@ -19,7 +19,7 @@ def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
     with async_context:
         return 2
     # TODO: add test case for generator_context once there is a typing solution
-    
+
 
 @pytest.mark.mypy_testing
 def test_superfunction_deduced_return_type_sync():

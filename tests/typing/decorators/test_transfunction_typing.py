@@ -1,4 +1,3 @@
-import pytest
 import asyncio
 import sys
 from contextlib import suppress
@@ -8,6 +7,7 @@ if sys.version_info <= (3, 11):
 else:
     from typing import reveal_type
 
+import pytest
 
 from transfunctions import transfunction, sync_context, async_context
 
@@ -19,7 +19,7 @@ def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
     with async_context:
         return 2
     # TODO: add test case for generator_context once there is a typing solution
-    
+
 
 @pytest.mark.mypy_testing
 def test_transfunction_deduced_return_type_sync():
