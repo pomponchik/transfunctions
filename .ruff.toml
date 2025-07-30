@@ -1,1 +1,4 @@
 lint.ignore = ['E501', 'E712']
+
+[format]
+quote-style = "single"

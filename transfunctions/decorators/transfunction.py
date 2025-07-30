@@ -1,6 +1,5 @@
 from inspect import currentframe
 
-from transfunctions.errors import AmbiguousFrameSyntaxError
 from transfunctions.transformer import FunctionTransformer
 from transfunctions._typing import Callable, FunctionParams, ReturnType
 
