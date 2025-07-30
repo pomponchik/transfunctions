@@ -2,10 +2,6 @@ class CallTransfunctionDirectlyError(NotImplementedError):
     pass
 
 
-class AmbiguousFrameSyntaxError(SyntaxError):
-    pass
-
-
 class DualUseOfDecoratorError(SyntaxError):
     pass
 

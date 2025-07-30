@@ -6,10 +6,7 @@ from typing import Any, Dict, Generic, List, Optional, Union, overload
 
 from displayhooks import not_display
 
-from transfunctions.errors import (
-    AmbiguousFrameSyntaxError,
-    WrongTransfunctionSyntaxError,
-)
+from transfunctions.errors import WrongTransfunctionSyntaxError
 from transfunctions.transformer import FunctionTransformer
 from transfunctions.typing import Callable, Coroutine, ReturnType, FunctionParams, Generator
 
