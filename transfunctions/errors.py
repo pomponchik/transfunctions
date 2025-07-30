@@ -2,6 +2,10 @@ class CallTransfunctionDirectlyError(NotImplementedError):
     pass
 
 
+class AmbiguousFrameSyntaxError(SyntaxError):
+    pass
+
+
 class DualUseOfDecoratorError(SyntaxError):
     pass
 
@@ -11,4 +15,9 @@ class WrongDecoratorSyntaxError(SyntaxError):
 
 
 class WrongTransfunctionSyntaxError(SyntaxError):
+    pass
+
+
+# TODO: we can later make this non-error, by identifying the name of decorator at call site
+class AliasedDecoratorSyntaxError(SyntaxError):
     pass

@@ -16,6 +16,7 @@ dependencies = [
     'dill==0.4.0',
     'typing_extensions ; python_version <= "3.10"',
 ]
+
 classifiers = [
     "Operating System :: OS Independent",
     'Operating System :: MacOS :: MacOS X',
