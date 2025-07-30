@@ -105,3 +105,10 @@ def test_superfunction_param_spec_fail_on_extra_kwargs_async():
 @pytest.mark.mypy_testing
 def test_simple_using_of_generator():
     list(typed_superfunction(1))
+
+
+# TODO: we should understand why it works
+@pytest.mark.mypy_testing
+@pytest.mark.xfail
+def test_wrong_using_of_generator():
+    list(typed_superfunction(None))
