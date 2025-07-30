@@ -32,7 +32,7 @@ from transfunctions.errors import (
     DualUseOfDecoratorError,
     WrongDecoratorSyntaxError,
 )
-from transfunctions._typing import Coroutine, Callable, Generator, FunctionParams, ReturnType
+from transfunctions.typing import Coroutine, Callable, Generator, FunctionParams, ReturnType
 
 
 class FunctionTransformer(Generic[FunctionParams, ReturnType]):

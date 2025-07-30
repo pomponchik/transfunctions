@@ -11,7 +11,7 @@ from transfunctions.errors import (
     WrongTransfunctionSyntaxError,
 )
 from transfunctions.transformer import FunctionTransformer
-from transfunctions._typing import Callable, Coroutine, ReturnType, FunctionParams, Generator
+from transfunctions.typing import Callable, Coroutine, ReturnType, FunctionParams, Generator
 
 
 class ParamSpecContainer(Generic[FunctionParams]):

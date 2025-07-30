@@ -1,7 +1,7 @@
 from inspect import currentframe
 
 from transfunctions.transformer import FunctionTransformer
-from transfunctions._typing import Callable, FunctionParams, ReturnType
+from transfunctions.typing import Callable, FunctionParams, ReturnType
 
 
 def transfunction(
