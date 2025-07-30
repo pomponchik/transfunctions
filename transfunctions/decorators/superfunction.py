@@ -13,11 +13,11 @@ from transfunctions.errors import (
 from transfunctions.transformer import FunctionTransformer
 from transfunctions._typing import Callable, Coroutine, ReturnType, FunctionParams, Generator
 
+
 class ParamSpecContainer(Generic[FunctionParams]):
     def __init__(self, *args: FunctionParams.args, **kwargs: FunctionParams.kwargs) -> None:
         self.args = args
         self.kwargs = kwargs
-
 
 class UsageTracer(Generic[FunctionParams, ReturnType], Coroutine[Any, None, ReturnType]):
     def __init__(
