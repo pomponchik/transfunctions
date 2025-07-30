@@ -50,7 +50,7 @@ class UsageTracer(Generic[FunctionParams, ReturnType], Coroutine[Any, None, Retu
         yield from generator
 
     def __await__(self) -> Generator[Any, None, ReturnType]:
-        return self.coroutine.__await__()
+        return self.coroutine.__await__()  # pragma: no cover
 
     def __invert__(self) -> ReturnType:
         if not self.tilde_syntax:
@@ -112,15 +112,9 @@ def superfunction(
     Callable[[Callable[FunctionParams, ReturnType]], Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]],
 ]:
     def decorator(function: Callable[FunctionParams, ReturnType]) -> Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]:
-        current_frame = currentframe()
-        if current_frame is None or current_frame.f_back is None:
-            raise AmbiguousFrameSyntaxError(
-                "No stack frame found. This is likely due to calling this code from dynamically evaluated contexts."
-            )
-
         transformer = FunctionTransformer(
             function,
-            current_frame.f_back.f_lineno,
+            currentframe().f_back.f_lineno,
             "superfunction",
         )
 
