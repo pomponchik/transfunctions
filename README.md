@@ -8,6 +8,7 @@
 [![Test-Package](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/pomponchik/transfunctions/actions/workflows/tests_and_coverage.yml)
 [![Python versions](https://img.shields.io/pypi/pyversions/transfunctions.svg)](https://pypi.python.org/pypi/transfunctions)
 [![PyPI version](https://badge.fury.io/py/transfunctions.svg)](https://badge.fury.io/py/transfunctions)
+[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 This library is designed to solve one of the most important problems in python programming - dividing all written code into 2 camps: sync and async. We get rid of code duplication by using templates.
