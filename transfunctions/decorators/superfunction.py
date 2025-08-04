@@ -113,6 +113,7 @@ def superfunction(  # type: ignore[misc]
             function,
             currentframe().f_back.f_lineno,  # type: ignore[union-attr]
             "superfunction",
+            currentframe().f_back,
         )
 
         if not tilde_syntax:

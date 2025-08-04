@@ -22,7 +22,7 @@ from ast import (
 from functools import update_wrapper, wraps
 from inspect import getfile, getsource, iscoroutinefunction, isfunction
 from sys import version_info
-from types import FunctionType, MethodType
+from types import FunctionType, MethodType, FrameType
 from typing import Any, Dict, Generic, List, Optional, Union, cast
 
 from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
@@ -35,11 +35,12 @@ from transfunctions.errors import (
     WrongMarkerSyntaxError,
 )
 from transfunctions.typing import Coroutine, Callable, Generator, FunctionParams, ReturnType
+from transfunctions.universal_namespace import UniversalNamespaceAroundFunction
 
 
 class FunctionTransformer(Generic[FunctionParams, ReturnType]):
     def __init__(
-        self, function: Callable[FunctionParams, ReturnType], decorator_lineno: int, decorator_name: str
+        self, function: Callable[FunctionParams, ReturnType], decorator_lineno: int, decorator_name: str, frame: FrameType,
     ) -> None:
         if isinstance(function, type(self)):
             raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
@@ -53,6 +54,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         self.function = function
         self.decorator_lineno = decorator_lineno
         self.decorator_name = decorator_name
+        self.frame = frame
         self.base_object = None
         self.cache: Dict[str, Callable] = {}
 
@@ -234,7 +236,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
             increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1))
 
         code = compile(tree, filename=getfile(self.function), mode='exec')
-        namespace: Dict[str, Callable] = {}
+        namespace = UniversalNamespaceAroundFunction(self.function, self.frame)
         exec(code, namespace)
         function_factory = namespace['wrapper']
         result = function_factory()
