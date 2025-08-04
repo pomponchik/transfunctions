@@ -33,6 +33,11 @@ SOME_GLOBAL = 777
 31. Дефолтные значения аргументов работают корректно, при использовании как литералов, так и переменных, с уважением к иерархии пространств имен.
 32. Можно указывать для аргументов и возвращаемого значения функции произвольные тайп-хинты, они присутствуют в пространстве имен, в т.ч. если какой-то тайп-хинт заалиясить.
 33. При попытке использовать await_it() с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
+34. Если использовать 'yield_from_it' или 'yield_it' вне генераторного блока, поднимется исключение.
+35. yield_from_it базово работает.
+36. yield_it базово работает.
+37. При попытке использовать yield_from_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
+37. При попытке использовать yield_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
 
 2 фаза:
 
@@ -1195,3 +1200,28 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
     function = template.get_generator_function()
 
     assert list(function(1, 2)) == [130]
+
+
+def test_basic_yield_from_it():
+    @transfunction
+    def template():
+        with generator_context:
+            yield_from_it([1, 2, 3])
+
+    generator_function = template.get_generator_function()
+
+    assert list(generator_function()) == [1, 2, 3]
+
+
+def test_yield_from_it_with_function_call():
+    def some_other_function():
+        return [1, 2, 3]
+
+    @transfunction
+    def template():
+        with generator_context:
+            yield_from_it(some_other_function())
+
+    generator_function = template.get_generator_function()
+
+    assert list(generator_function()) == [1, 2, 3]

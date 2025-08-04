@@ -439,3 +439,25 @@ def test_usual_tilde_function_with_all_content_in_async_context():
             return True
 
     assert ~function() is None
+
+
+def test_basic_yield_from_it():
+    @superfunction
+    def function():
+        with generator_context:
+            yield_from_it([1, 2, 3])
+
+    assert list(function()) == [1, 2, 3]
+
+
+def test_yield_from_it_with_function_call():
+    def some_other_function():
+        return [1, 2, 3]
+
+    @superfunction
+    def function():
+
+        with generator_context:
+            yield_from_it(some_other_function())
+
+    assert list(function()) == [1, 2, 3]

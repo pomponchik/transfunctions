@@ -7,4 +7,4 @@ from transfunctions.typing import Callable, FunctionParams, ReturnType
 def transfunction(
     function: Callable[FunctionParams, ReturnType],
 ) -> FunctionTransformer[FunctionParams, ReturnType]:
-    return FunctionTransformer(function, currentframe().f_back.f_lineno, "transfunction")
+    return FunctionTransformer(function, currentframe().f_back.f_lineno, "transfunction")  # type: ignore[union-attr]

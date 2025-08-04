@@ -9,7 +9,7 @@ else:
 
 import pytest
 
-from transfunctions import superfunction, sync_context, async_context, generator_context
+from transfunctions import superfunction, sync_context, async_context, generator_context, yield_from_it
 
 
 """
@@ -23,7 +23,7 @@ from transfunctions import superfunction, sync_context, async_context, generator
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_deduced_return_type_sync():
+def test_superfunction_deduced_return_type_sync() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -35,7 +35,7 @@ def test_superfunction_deduced_return_type_sync():
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_deduced_return_type_async():
+def test_superfunction_deduced_return_type_async() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -47,7 +47,7 @@ def test_superfunction_deduced_return_type_async():
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_param_spec_fail_on_incorrect_arg_type_sync():
+def test_superfunction_param_spec_fail_on_incorrect_arg_type_sync() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -59,7 +59,7 @@ def test_superfunction_param_spec_fail_on_incorrect_arg_type_sync():
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_sync():
+def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_sync() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -71,7 +71,7 @@ def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_sync():
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_param_spec_on_correct_args_types_sync():
+def test_superfunction_param_spec_on_correct_args_types_sync() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -83,7 +83,7 @@ def test_superfunction_param_spec_on_correct_args_types_sync():
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_param_spec_fail_on_incorrect_arg_type_async():
+def test_superfunction_param_spec_fail_on_incorrect_arg_type_async() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -95,7 +95,7 @@ def test_superfunction_param_spec_fail_on_incorrect_arg_type_async():
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_async():
+def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_async() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -107,7 +107,7 @@ def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_async():
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_param_spec_on_correct_args_types_async():
+def test_superfunction_param_spec_on_correct_args_types_async() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -119,7 +119,7 @@ def test_superfunction_param_spec_on_correct_args_types_async():
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_param_spec_fail_on_missing_args_sync():
+def test_superfunction_param_spec_fail_on_missing_args_sync() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -133,7 +133,7 @@ def test_superfunction_param_spec_fail_on_missing_args_sync():
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
-def test_superfunction_param_spec_fail_on_extra_args_sync():
+def test_superfunction_param_spec_fail_on_extra_args_sync() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -147,7 +147,7 @@ def test_superfunction_param_spec_fail_on_extra_args_sync():
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
-def test_superfunction_param_spec_fail_on_extra_kwargs_sync():
+def test_superfunction_param_spec_fail_on_extra_kwargs_sync() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -160,7 +160,7 @@ def test_superfunction_param_spec_fail_on_extra_kwargs_sync():
 
 
 @pytest.mark.mypy_testing
-def test_superfunction_param_spec_fail_on_missing_args_async():
+def test_superfunction_param_spec_fail_on_missing_args_async() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -174,7 +174,7 @@ def test_superfunction_param_spec_fail_on_missing_args_async():
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
-def test_superfunction_param_spec_fail_on_extra_args_async():
+def test_superfunction_param_spec_fail_on_extra_args_async() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -188,7 +188,7 @@ def test_superfunction_param_spec_fail_on_extra_args_async():
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
-def test_superfunction_param_spec_fail_on_extra_kwargs_async():
+def test_superfunction_param_spec_fail_on_extra_kwargs_async() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -202,7 +202,7 @@ def test_superfunction_param_spec_fail_on_extra_kwargs_async():
 
 @pytest.mark.mypy_testing
 @pytest.mark.xfail  # it shouldn't work because typed_superfunction is a generator function, gut it's not returning a generator object according to it's typing.
-def test_simple_using_of_generator_function_with_simple_yield_from():
+def test_simple_using_of_generator_function_with_simple_yield_from() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -218,7 +218,7 @@ def test_simple_using_of_generator_function_with_simple_yield_from():
 # TODO: we should understand why it works
 @pytest.mark.xfail
 @pytest.mark.mypy_testing
-def test_wrong_using_of_generator_function_with_simple_yield_from():
+def test_wrong_using_of_generator_function_with_simple_yield_from() -> None:
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
         with sync_context:
@@ -229,3 +229,33 @@ def test_wrong_using_of_generator_function_with_simple_yield_from():
             yield from [1, 2, 3]
 
     list(typed_superfunction(None))
+
+
+@pytest.mark.mypy_testing
+def test_simple_using_of_generator_function_with_yield_from_it_marker_function() -> None:
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+        with generator_context:
+            yield_from_it([1, 2, 3])
+
+    list(typed_superfunction(1))
+
+
+# TODO: we should understand why it works
+@pytest.mark.xfail
+@pytest.mark.mypy_testing
+def test_using_of_generator_function_with_yield_from_it_marker_function_with_wrong_return_value() -> None:
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+        with generator_context:
+            yield_from_it(['one', 'two'])
+
+    list(typed_superfunction(1))

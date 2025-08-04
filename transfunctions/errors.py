@@ -10,6 +10,10 @@ class WrongDecoratorSyntaxError(SyntaxError):
     pass
 
 
+class WrongMarkerSyntaxError(SyntaxError):
+    pass
+
+
 class WrongTransfunctionSyntaxError(SyntaxError):
     pass
 

@@ -16,7 +16,7 @@ class ParamSpecContainer(Generic[FunctionParams]):
         self.args = args
         self.kwargs = kwargs
 
-class UsageTracer(Generic[FunctionParams, ReturnType], Coroutine[Any, None, ReturnType]):
+class UsageTracer(Generic[FunctionParams, ReturnType], Coroutine[Any, None, ReturnType], Generator[ReturnType, None, None]):
     def __init__(
         self,
         param_spec: ParamSpecContainer[FunctionParams],
@@ -102,8 +102,8 @@ def superfunction(
 ) -> Callable[[Callable[FunctionParams, ReturnType]], Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]]: ...
 
 
-def superfunction(
-    function: Optional[Callable[FunctionParams, ReturnType]] = None, *, tilde_syntax: bool = True
+def superfunction(  # type: ignore[misc]
+    *args: Callable[FunctionParams, ReturnType], tilde_syntax: bool = True
 ) -> Union[
     Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]],
     Callable[[Callable[FunctionParams, ReturnType]], Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]],
@@ -111,7 +111,7 @@ def superfunction(
     def decorator(function: Callable[FunctionParams, ReturnType]) -> Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]:
         transformer = FunctionTransformer(
             function,
-            currentframe().f_back.f_lineno,
+            currentframe().f_back.f_lineno,  # type: ignore[union-attr]
             "superfunction",
         )
 
@@ -130,7 +130,7 @@ def superfunction(
 
         return wrapper
 
-    if function is not None:
-        return decorator(function)
+    if len(args):
+        return decorator(args[0])
 
     return decorator

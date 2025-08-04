@@ -17,6 +17,7 @@ from ast import (
     arguments,
     increment_lineno,
     parse,
+    YieldFrom,
 )
 from functools import update_wrapper, wraps
 from inspect import getfile, getsource, iscoroutinefunction, isfunction
@@ -31,6 +32,7 @@ from transfunctions.errors import (
     CallTransfunctionDirectlyError,
     DualUseOfDecoratorError,
     WrongDecoratorSyntaxError,
+    WrongMarkerSyntaxError,
 )
 from transfunctions.typing import Coroutine, Callable, Generator, FunctionParams, ReturnType
 
@@ -90,7 +92,10 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
         class ExtractAwaitExpressions(NodeTransformer):
             def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
-                if isinstance(node.func, ast.Name) and node.func.id == 'await_it':
+                if isinstance(node.func, Name) and node.func.id == 'await_it':
+                    if len(node.args) != 1 or node.keywords:
+                        raise WrongMarkerSyntaxError('The "await_it" marker can be used with only one positional argument.')
+
                     return Await(
                         value=node.args[0],
                         lineno=node.lineno,
@@ -109,7 +114,27 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         )
 
     def get_generator_function(self) -> Callable[FunctionParams, Generator[ReturnType, None, None]]:
-        return self.extract_context('generator_context')
+        class ConvertYieldFroms(NodeTransformer):
+            def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
+                if isinstance(node.func, Name) and node.func.id == 'yield_from_it':
+                    if len(node.args) != 1 or node.keywords:
+                        raise WrongMarkerSyntaxError('The "yield_from_it" marker can be used with only one positional argument.')
+
+                    return YieldFrom(
+                        value=node.args[0],
+                        lineno=node.lineno,
+                        end_lineno=node.end_lineno,
+                        col_offset=node.col_offset,
+                        end_col_offset=node.end_col_offset,
+                    )
+                return node
+
+        return self.extract_context(
+            'generator_context',
+            addictional_transformers=[
+                ConvertYieldFroms(),
+            ],
+        )
 
     @staticmethod
     def clear_spaces_from_source_code(source_code: str) -> str:
