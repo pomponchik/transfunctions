@@ -12,6 +12,16 @@ import pytest
 from transfunctions import superfunction, sync_context, async_context, generator_context
 
 
+"""
+Что нужно проверить:
+
+1. Что await_it, yield_from_it и yield_it типизированы.
+
+Что проверено:
+
+"""
+
+
 @pytest.mark.mypy_testing
 def test_superfunction_deduced_return_type_sync():
     @superfunction
