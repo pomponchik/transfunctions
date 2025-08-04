@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 import pytest
 import full_match
 
-from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, WrongDecoratorSyntaxError, WrongTransfunctionSyntaxError, WrongMarkerSyntaxError
+from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, yield_from_it, WrongDecoratorSyntaxError, WrongTransfunctionSyntaxError, WrongMarkerSyntaxError
 
 """
 Что нужно проверить:

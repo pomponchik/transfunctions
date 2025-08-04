@@ -25,7 +25,7 @@ def test_set_something_and_get():
 
 
 def test_get_nonlocal():
-    some_nonlocal = 123
+    some_nonlocal = 123  # noqa: F841
 
     def function():
         pass
@@ -49,7 +49,7 @@ def test_get_global():
 
 
 def test_get_nonlocal_with_name_as_global():
-    some_global = 123
+    some_global = 123  # noqa: F841
 
     def function():
         pass
@@ -79,7 +79,7 @@ def test_get_builtin():
 def test_get_nonlocal_with_name_as_builtin():
     builtins.some_name = 1234
 
-    some_name = 123
+    some_name = 123  # noqa: F841
 
     def function():
         pass
@@ -109,7 +109,7 @@ def test_get_global_with_name_as_builtin():
 
 
 def test_set_value_with_same_name_as_nonlocal():
-    some_nonlocal = 123
+    some_nonlocal = 123  # noqa: F841
 
     def function():
         pass

@@ -8,7 +8,7 @@ import full_match
 
 from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError, DualUseOfDecoratorError, WrongMarkerSyntaxError
 from transfunctions.transformer import FunctionTransformer
-from transfunctions import async_context, sync_context, generator_context
+from transfunctions import async_context, sync_context, generator_context, yield_from_it, await_it
 
 
 SOME_GLOBAL = 777
@@ -1244,7 +1244,7 @@ def test_await_it_with_two_arguments():
             return await_it(another_function(), another_function())
 
     with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
-        function = template.get_async_function()
+        template.get_async_function()
 
 
 def test_await_it_without_arguments():
@@ -1254,7 +1254,7 @@ def test_await_it_without_arguments():
             return await_it()
 
     with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
-        function = template.get_async_function()
+        template.get_async_function()
 
 
 def test_await_it_with_one_usual_and_one_named_arguments():
@@ -1267,7 +1267,7 @@ def test_await_it_with_one_usual_and_one_named_arguments():
             return await_it(another_function(), kek=another_function())
 
     with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
-        function = template.get_async_function()
+        template.get_async_function()
 
 
 def test_yield_from_it_with_two_arguments():
@@ -1277,7 +1277,7 @@ def test_yield_from_it_with_two_arguments():
             return yield_from_it([1, 2, 3], [1, 2, 3])
 
     with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
-        function = template.get_generator_function()
+        template.get_generator_function()
 
 
 def test_yield_from_it_without_arguments():
@@ -1287,7 +1287,7 @@ def test_yield_from_it_without_arguments():
             return yield_from_it()
 
     with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
-        function = template.get_generator_function()
+        template.get_generator_function()
 
 
 def test_yield_from_it_with_one_usual_and_one_named_arguments():
@@ -1297,7 +1297,7 @@ def test_yield_from_it_with_one_usual_and_one_named_arguments():
             return yield_from_it([1, 2, 3], kek=[1, 2, 3])
 
     with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
-        function = template.get_generator_function()
+        template.get_generator_function()
 
 
 def test_string_literal_default_value_for_usual_function():
