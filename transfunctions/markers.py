@@ -22,3 +22,6 @@ generator_context = create_generator_context()
 
 def await_it(some_expression: Any) -> Any:
     pass   # pragma: no cover
+
+def yield_from_it(some_expression: Any) -> Any:
+    pass   # pragma: no cover
