@@ -205,8 +205,8 @@ def test_simple_using_of_generator():
 
 
 # TODO: we should understand why it works
-@pytest.mark.mypy_testing
 @pytest.mark.xfail
+@pytest.mark.mypy_testing
 def test_wrong_using_of_generator():
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
