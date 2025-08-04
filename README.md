@@ -152,7 +152,7 @@ def template():
 The `get_async_function` method will return an async function that looks like this:
 
 ```python
-def template():
+async def template():
     print('so, ', end='')
     print("it's an async function!")
 ```
