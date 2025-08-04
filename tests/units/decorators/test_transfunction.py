@@ -32,11 +32,12 @@ SOME_GLOBAL = 777
 30. Нельзя использовать контекстные маркеры с атрибутами.
 31. Дефолтные значения аргументов работают корректно, при использовании как литералов, так и переменных, с уважением к иерархии пространств имен.
 32. Можно указывать для аргументов и возвращаемого значения функции произвольные тайп-хинты, они присутствуют в пространстве имен, в т.ч. если какой-то тайп-хинт заалиясить.
-33. При попытке использовать await_it() с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
 34. Если использовать 'yield_from_it' или 'yield_it' вне генераторного блока, поднимется исключение.
 36. yield_it базово работает.
 37. При попытке использовать yield_from_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
-37. При попытке использовать yield_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
+38. При попытке использовать yield_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
+39. При попытке написать "return yield_it(...)" будет ошибка.
+40. При попытке написать "return yield_from_it(...)" будет ошибка.
 
 2 фаза:
 
@@ -63,6 +64,7 @@ SOME_GLOBAL = 777
 26. Если функция-шаблон содержит исключительно sync_context блок, при генерации async функции в ее тело будет подставлено pass, и по аналогии с другими типами. Исключение - генераторы, там потом будет проверка на наличие yield.
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без, как вне контекстных маркеров, так и внутри.
 35. yield_from_it базово работает.
+33. При попытке использовать await_it() с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
 """
 
 @transfunction
@@ -1261,3 +1263,33 @@ def test_await_it_with_one_usual_and_one_named_arguments():
 
     with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
         function = template.get_async_function()
+
+
+def test_yield_from_it_with_two_arguments():
+    @transfunction
+    def template():
+        with generator_context:
+            return yield_from_it([1, 2, 3], [1, 2, 3])
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+        function = template.get_generator_function()
+
+
+def test_yield_from_it_without_arguments():
+    @transfunction
+    def template():
+        with generator_context:
+            return yield_from_it()
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+        function = template.get_generator_function()
+
+
+def test_yield_from_it_with_one_usual_and_one_named_arguments():
+    @transfunction
+    def template():
+        with generator_context:
+            return yield_from_it([1, 2, 3], kek=[1, 2, 3])
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+        function = template.get_generator_function()
