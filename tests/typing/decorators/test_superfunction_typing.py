@@ -191,6 +191,7 @@ def test_superfunction_param_spec_fail_on_extra_kwargs_async():
 
 
 @pytest.mark.mypy_testing
+@pytest.mark.xfail  # it shouldn't work because typed_superfunction is a generator function, gut it's not returning a generator object according to it's typing.
 def test_simple_using_of_generator():
     @superfunction
     def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:

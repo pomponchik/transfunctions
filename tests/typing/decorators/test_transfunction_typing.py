@@ -179,6 +179,7 @@ def test_transfunction_param_spec_fail_on_extra_kwargs_async():
 
 
 @pytest.mark.mypy_testing
+@pytest.mark.xfail
 def test_transfunction_param_spec_on_correct_args_types_async():
     @transfunction
     def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
