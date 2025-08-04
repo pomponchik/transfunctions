@@ -23,6 +23,8 @@ from transfunctions import superfunction, sync_context, async_context, generator
 """
 
 
+global_variable = 123
+
 def test_just_sync_call_without_breackets():
     @superfunction
     def function():
@@ -639,3 +641,125 @@ def test_list_literal_default_value_for_generator_function():
 
     assert list(function(1)) == [1]
     assert list(function(2)) == [1, 2]
+
+
+def test_nonlocal_variable_default_value_for_usual_function_with_tilde():
+    variable = 123
+
+    @superfunction
+    def function(number=variable):
+        return number
+
+    assert ~function() == variable
+
+
+def test_global_variable_default_value_for_usual_function_with_tilde():
+    @superfunction
+    def function(number=global_variable):
+        return number
+
+    assert ~function() == global_variable
+
+
+def test_resetted_global_variable_default_value_for_usual_function_with_tilde():
+    global_variable = 'kek'
+
+    @superfunction
+    def function(number=global_variable):
+        return number
+
+    assert ~function() == 'kek'
+
+
+def test_nonlocal_variable_default_value_for_usual_function_without_tilde():
+    container = []
+    variable = 123
+
+    @superfunction(tilde_syntax=False)
+    def function(number=variable):
+        container.append(number)
+
+    function()
+
+    assert container == [variable]
+
+
+def test_global_variable_default_value_for_usual_function_without_tilde():
+    container = []
+
+    @superfunction(tilde_syntax=False)
+    def function(number=global_variable):
+        container.append(number)
+
+    function()
+
+    assert container == [global_variable]
+
+
+def test_resetted_global_variable_default_value_for_usual_function_without_tilde():
+    container = []
+    global_variable = 'kek'
+
+    @superfunction(tilde_syntax=False)
+    def function(number=global_variable):
+        container.append(number)
+
+    function()
+
+    assert container == ['kek']
+
+
+def test_nonlocal_variable_default_value_for_async_function():
+    variable = 123
+
+    @superfunction
+    def function(number=variable):
+        return number
+
+    assert run(function()) == variable
+
+
+def test_global_variable_default_value_for_async_function():
+    @superfunction
+    def function(number=global_variable):
+        return number
+
+    assert run(function()) == global_variable
+
+
+def test_resetted_global_variable_default_value_for_async_function():
+    global_variable = 'kek'
+
+    @superfunction
+    def function(number=global_variable):
+        return number
+
+    assert run(function()) == 'kek'
+
+
+def test_nonlocal_variable_default_value_for_generator_function():
+    variable = 123
+
+    @superfunction
+    def function(number=variable):
+        yield number
+
+    assert list(function()) == [variable]
+
+
+def test_global_variable_default_value_for_generator_function():
+    @superfunction
+    def function(number=global_variable):
+        yield number
+
+    assert list(function()) == [global_variable]
+
+
+def test_resetted_global_variable_default_value_for_generator_function():
+    global_variable = 'kek'
+
+    @superfunction
+    def function(number=global_variable):
+        yield number
+
+    assert list(function()) == ['kek']

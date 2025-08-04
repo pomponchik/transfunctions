@@ -39,7 +39,7 @@ SOME_GLOBAL = 777
 39. При попытке написать "return yield_it(...)" будет ошибка.
 40. При попытке написать "return yield_from_it(...)" будет ошибка.
 41. Контекстные маркеры можно использовать вместе, например: "with sync_context, async_context: ...".
-42. Дефолтные значения аргументов работают корректно при использовании переменных, с уважением к иерархии пространств имен.
+
 
 2 фаза:
 
@@ -69,6 +69,7 @@ SOME_GLOBAL = 777
 33. При попытке использовать await_it() с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
 37. При попытке использовать yield_from_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
 31. Дефолтные значения аргументов работают корректно при использовании литералов. При преобразовании одного шаблона в функции разных типов используется один и тот же экземпляр литерала.
+42. Дефолтные значения аргументов работают корректно при использовании переменных, с уважением к иерархии пространств имен.
 """
 
 @transfunction
@@ -1420,3 +1421,112 @@ def test_list_literal_default_value_for_generator_function():
 
     assert list(function(1)) == [1]
     assert list(function(2)) == [1, 2]
+
+
+def test_nonlocal_variable_default_value_for_usual_function():
+    container = []
+    variable = 123
+
+    @transfunction
+    def template(number=variable):
+        container.append(number)
+
+    function = template.get_usual_function()
+    function()
+
+    assert container == [variable]
+
+
+def test_global_variable_default_value_for_usual_function():
+    container = []
+
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        container.append(number)
+
+    function = template.get_usual_function()
+    function()
+
+    assert container == [SOME_GLOBAL]
+
+
+def test_resetted_global_variable_default_value_for_usual_function():
+    container = []
+    SOME_GLOBAL = 'kek'
+
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        container.append(number)
+
+    function = template.get_usual_function()
+    function()
+
+    assert container == ['kek']
+
+
+def test_nonlocal_variable_default_value_for_async_function():
+    variable = 123
+
+    @transfunction
+    def template(number=variable):
+        return number
+
+    function = template.get_async_function()
+
+    assert run(function()) == variable
+
+
+def test_global_variable_default_value_for_async_function():
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        return number
+
+    function = template.get_async_function()
+
+    assert run(function()) == SOME_GLOBAL
+
+
+def test_resetted_global_variable_default_value_for_async_function():
+    SOME_GLOBAL = 'kek'
+
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        return number
+
+    function = template.get_async_function()
+
+    assert run(function()) == 'kek'
+
+
+def test_nonlocal_variable_default_value_for_generator_function():
+    variable = 123
+
+    @transfunction
+    def template(number=variable):
+        yield number
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [variable]
+
+
+def test_global_variable_default_value_for_generator_function():
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        yield number
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [SOME_GLOBAL]
+
+
+def test_resetted_global_variable_default_value_for_generator_function():
+    SOME_GLOBAL = 'kek'
+
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        yield number
+
+    function = template.get_generator_function()
+
+    assert list(function()) == ['kek']
