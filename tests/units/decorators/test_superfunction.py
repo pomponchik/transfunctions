@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 import pytest
 import full_match
 
-from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, WrongDecoratorSyntaxError, WrongTransfunctionSyntaxError
+from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, WrongDecoratorSyntaxError, WrongTransfunctionSyntaxError, WrongMarkerSyntaxError
 
 """
 Что нужно проверить:
@@ -461,3 +461,52 @@ def test_yield_from_it_with_function_call():
             yield_from_it(some_other_function())
 
     assert list(function()) == [1, 2, 3]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def test_await_it_with_two_arguments():
+    async def another_function():
+        return None
+
+    @superfunction
+    def template():
+        with async_context:
+            return await_it(another_function(), another_function())
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        run(template())
+
+
+def test_await_it_without_arguments():
+    @superfunction
+    def template():
+        with async_context:
+            return await_it()
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        run(template())
+
+
+def test_await_it_with_one_usual_and_one_named_arguments():
+    async def another_function():
+        return None
+
+    @superfunction
+    def template():
+        with async_context:
+            return await_it(another_function(), kek=another_function())
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        run(template())

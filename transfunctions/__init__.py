@@ -14,4 +14,5 @@ from transfunctions.errors import (
     DualUseOfDecoratorError as DualUseOfDecoratorError,
     WrongDecoratorSyntaxError as WrongDecoratorSyntaxError,
     WrongTransfunctionSyntaxError as WrongTransfunctionSyntaxError,
+    WrongMarkerSyntaxError as WrongMarkerSyntaxError,
 )

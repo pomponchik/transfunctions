@@ -6,7 +6,7 @@ from contextlib import contextmanager
 import pytest
 import full_match
 
-from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError, DualUseOfDecoratorError
+from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError, DualUseOfDecoratorError, WrongMarkerSyntaxError
 from transfunctions.transformer import FunctionTransformer
 from transfunctions import async_context, sync_context, generator_context
 
@@ -34,7 +34,6 @@ SOME_GLOBAL = 777
 32. Можно указывать для аргументов и возвращаемого значения функции произвольные тайп-хинты, они присутствуют в пространстве имен, в т.ч. если какой-то тайп-хинт заалиясить.
 33. При попытке использовать await_it() с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
 34. Если использовать 'yield_from_it' или 'yield_it' вне генераторного блока, поднимется исключение.
-35. yield_from_it базово работает.
 36. yield_it базово работает.
 37. При попытке использовать yield_from_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
 37. При попытке использовать yield_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
@@ -63,6 +62,7 @@ SOME_GLOBAL = 777
 12. Декоратор @transfunction можно использовать на методах (в т.ч. асинк и генераторных).
 26. Если функция-шаблон содержит исключительно sync_context блок, при генерации async функции в ее тело будет подставлено pass, и по аналогии с другими типами. Исключение - генераторы, там потом будет проверка на наличие yield.
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без, как вне контекстных маркеров, так и внутри.
+35. yield_from_it базово работает.
 """
 
 @transfunction
@@ -1225,3 +1225,39 @@ def test_yield_from_it_with_function_call():
     generator_function = template.get_generator_function()
 
     assert list(generator_function()) == [1, 2, 3]
+
+
+def test_await_it_with_two_arguments():
+    async def another_function():
+        return None
+
+    @transfunction
+    def template():
+        with async_context:
+            return await_it(another_function(), another_function())
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        function = template.get_async_function()
+
+
+def test_await_it_without_arguments():
+    @transfunction
+    def template():
+        with async_context:
+            return await_it()
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        function = template.get_async_function()
+
+
+def test_await_it_with_one_usual_and_one_named_arguments():
+    async def another_function():
+        return None
+
+    @transfunction
+    def template():
+        with async_context:
+            return await_it(another_function(), kek=another_function())
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        function = template.get_async_function()
