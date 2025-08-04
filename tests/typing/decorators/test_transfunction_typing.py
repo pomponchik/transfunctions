@@ -163,6 +163,7 @@ def test_transfunction_param_spec_fail_on_extra_args_async():
     with suppress(TypeError):
         asyncio.run(typed_transfunction.get_usual_function()(1.0, 2.0, kwarg=1))
 
+
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
 def test_transfunction_param_spec_fail_on_extra_kwargs_async():
@@ -175,6 +176,7 @@ def test_transfunction_param_spec_fail_on_extra_kwargs_async():
 
     with suppress(TypeError):
         asyncio.run(typed_transfunction.get_usual_function()(1.0, kwarg=1, kwarg2=1))
+
 
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_on_correct_args_types_async():
