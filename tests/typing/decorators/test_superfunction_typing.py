@@ -12,58 +12,111 @@ import pytest
 from transfunctions import superfunction, sync_context, async_context, generator_context
 
 
-@superfunction
-def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
-    with sync_context:
-        return 1
-    with async_context:
-        return 2
-    with generator_context:
-        yield from [1, 2, 3]
-
-
 @pytest.mark.mypy_testing
 def test_superfunction_deduced_return_type_sync():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     reveal_type(~typed_superfunction(1.0)) # N: Revealed type is "builtins.int"
 
 
 @pytest.mark.mypy_testing
 def test_superfunction_deduced_return_type_async():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     reveal_type(asyncio.run(typed_superfunction(1.0))) # N: Revealed type is "builtins.int"
 
 
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_incorrect_arg_type_sync():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     ~typed_superfunction(None, kwarg=1) # E: Argument 1 to "typed_superfunction" has incompatible type "None"; expected "float"
 
 
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_sync():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     ~typed_superfunction(1.0, kwarg=None) # E: Argument "kwarg" to "typed_superfunction" has incompatible type "None"; expected "int"
 
 
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_on_correct_args_types_sync():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     ~typed_superfunction(1.0, kwarg=1)
 
 
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_incorrect_arg_type_async():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     asyncio.run(typed_superfunction(None, kwarg=1)) # E: Argument 1 to "typed_superfunction" has incompatible type "None"; expected "float"
 
 
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_async():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     asyncio.run(typed_superfunction(1.0, kwarg=None)) # E: Argument "kwarg" to "typed_superfunction" has incompatible type "None"; expected "int"
 
 
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_on_correct_args_types_async():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     asyncio.run(typed_superfunction(1.0, kwarg=1))
 
 
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_missing_args_sync():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     with suppress(TypeError):
         ~typed_superfunction() # E: Missing positional argument "arg" in call to "typed_superfunction"  [call-arg]
 
@@ -71,6 +124,13 @@ def test_superfunction_param_spec_fail_on_missing_args_sync():
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_args_sync():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     with suppress(TypeError):
         ~typed_superfunction(1.0, 2.0, kwarg=1)
 
@@ -78,12 +138,26 @@ def test_superfunction_param_spec_fail_on_extra_args_sync():
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_kwargs_sync():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     with suppress(TypeError):
         ~typed_superfunction(1.0, kwarg=1, kwarg2=1)
 
 
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_missing_args_async():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     with suppress(TypeError):
         asyncio.run(typed_superfunction()) # E: Missing positional argument "arg" in call to "typed_superfunction"  [call-arg]
 
@@ -91,6 +165,13 @@ def test_superfunction_param_spec_fail_on_missing_args_async():
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_args_async():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     with suppress(TypeError):
         asyncio.run(typed_superfunction(1.0, 2.0, kwarg=1))
 
@@ -98,12 +179,28 @@ def test_superfunction_param_spec_fail_on_extra_args_async():
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_kwargs_async():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+
     with suppress(TypeError):
         asyncio.run(typed_superfunction(1.0, kwarg=1, kwarg2=1))
 
 
 @pytest.mark.mypy_testing
 def test_simple_using_of_generator():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+        with generator_context:
+            yield from [1, 2, 3]
+
     list(typed_superfunction(1))
 
 
@@ -111,4 +208,13 @@ def test_simple_using_of_generator():
 @pytest.mark.mypy_testing
 @pytest.mark.xfail
 def test_wrong_using_of_generator():
+    @superfunction
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+        with sync_context:
+            return 1
+        with async_context:
+            return 2
+        with generator_context:
+            yield from [1, 2, 3]
+
     list(typed_superfunction(None))
