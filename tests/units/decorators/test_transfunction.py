@@ -16,6 +16,8 @@ SOME_GLOBAL = 777
 """
 Что нужно проверить:
 
+В процессе:
+
 1 фаза:
 
 23. Если использовать 'await_it' вне асинк блока, поднимется исключение.
@@ -30,14 +32,14 @@ SOME_GLOBAL = 777
 28. Нельзя использовать контекстные маркеры вместе со сторонними контекстными менеджерами.
 29. Сторонние контекстные менеджеры атрибутами работают.
 30. Нельзя использовать контекстные маркеры с атрибутами.
-31. Дефолтные значения аргументов работают корректно, при использовании как литералов, так и переменных, с уважением к иерархии пространств имен.
-32. Можно указывать для аргументов и возвращаемого значения функции произвольные тайп-хинты, они присутствуют в пространстве имен, в т.ч. если какой-то тайп-хинт заалиясить.
+32. Можно указывать для аргументов и возвращаемого значения функции произвольные тайп-хинты, т.е. они присутствуют в пространстве имен, в т.ч. если какой-то тайп-хинт заалиясить.
 34. Если использовать 'yield_from_it' или 'yield_it' вне генераторного блока, поднимется исключение.
 36. yield_it базово работает.
-37. При попытке использовать yield_from_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
 38. При попытке использовать yield_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
 39. При попытке написать "return yield_it(...)" будет ошибка.
 40. При попытке написать "return yield_from_it(...)" будет ошибка.
+41. Контекстные маркеры можно использовать вместе, например: "with sync_context, async_context: ...".
+42. Дефолтные значения аргументов работают корректно при использовании переменных, с уважением к иерархии пространств имен.
 
 2 фаза:
 
@@ -65,6 +67,8 @@ SOME_GLOBAL = 777
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без, как вне контекстных маркеров, так и внутри.
 35. yield_from_it базово работает.
 33. При попытке использовать await_it() с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
+37. При попытке использовать yield_from_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
+31. Дефолтные значения аргументов работают корректно при использовании литералов. При преобразовании одного шаблона в функции разных типов используется один и тот же экземпляр литерала.
 """
 
 @transfunction
@@ -1293,3 +1297,126 @@ def test_yield_from_it_with_one_usual_and_one_named_arguments():
 
     with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
         function = template.get_generator_function()
+
+
+def test_string_literal_default_value_for_usual_function():
+    @transfunction
+    def template(string='kek'):
+        return string
+
+    function = template.get_usual_function()
+
+    assert function() == 'kek'
+
+
+def test_int_literal_default_value_for_usual_function():
+    @transfunction
+    def template(number=123):
+        return number
+
+    function = template.get_usual_function()
+
+    assert function() == 123
+
+
+def test_list_literal_default_value_for_usual_function():
+    @transfunction
+    def template(number, lst=[]):
+        lst.append(number)
+        return lst
+
+    function = template.get_usual_function()
+
+    assert function(1) == [1]
+    assert function(2) == [1, 2]
+
+
+def test_list_literal_default_value_it_the_same_for_all_types_of_functions():
+    @transfunction
+    def template(number, lst=[]):
+        lst.append(number)
+        with async_context:
+            return lst
+        with sync_context:
+            return lst
+        with generator_context:
+            yield from lst
+
+    function = template.get_usual_function()
+
+    assert function(1) == [1]
+    assert function(2) == [1, 2]
+
+    async_function = template.get_async_function()
+
+    assert run(async_function(3)) == [1, 2, 3]
+    assert run(async_function(4)) == [1, 2, 3, 4]
+
+    generator_function = template.get_generator_function()
+
+    assert list(generator_function(5)) == [1, 2, 3, 4, 5]
+    assert list(generator_function(6)) == [1, 2, 3, 4, 5, 6]
+
+
+def test_string_literal_default_value_for_async_function():
+    @transfunction
+    def template(string='kek'):
+        return string
+
+    function = template.get_async_function()
+
+    assert run(function()) == 'kek'
+
+
+def test_int_literal_default_value_for_async_function():
+    @transfunction
+    def template(number=123):
+        return number
+
+    function = template.get_async_function()
+
+    assert run(function()) == 123
+
+
+def test_list_literal_default_value_for_async_function():
+    @transfunction
+    def template(number, lst=[]):
+        lst.append(number)
+        return lst
+
+    function = template.get_async_function()
+
+    assert run(function(1)) == [1]
+    assert run(function(2)) == [1, 2]
+
+
+def test_string_literal_default_value_for_generator_function():
+    @transfunction
+    def template(string='kek'):
+        yield string
+
+    function = template.get_generator_function()
+
+    assert list(function()) == ['kek']
+
+
+def test_int_literal_default_value_for_generator_function():
+    @transfunction
+    def template(number=123):
+        yield number
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [123]
+
+
+def test_list_literal_default_value_for_generator_function():
+    @transfunction
+    def template(number, lst=[]):
+        lst.append(number)
+        yield from lst
+
+    function = template.get_generator_function()
+
+    assert list(function(1)) == [1]
+    assert list(function(2)) == [1, 2]

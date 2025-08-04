@@ -540,3 +540,102 @@ def test_yield_from_it_with_one_usual_and_one_named_arguments():
 
     with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
         list(template())
+
+
+def test_string_literal_default_value_for_usual_function_with_tilde():
+    @superfunction
+    def function(string='kek'):
+        return string
+
+    assert ~function() == 'kek'
+
+
+def test_int_literal_default_value_for_usual_function_with_tilde():
+    @superfunction
+    def function(number=123):
+        return number
+
+    assert ~function() == 123
+
+
+def test_list_literal_default_value_for_usual_function_with_tilde():
+    @superfunction
+    def function(number, lst=[]):
+        lst.append(number)
+        return lst
+
+    assert ~function(1) == [1]
+    assert ~function(2) == [1, 2]
+
+
+def test_list_literal_default_value_it_the_same_for_all_types_of_functions_when_usual_one_is_with_tilde():
+    @superfunction
+    def function(number, lst=[]):
+        lst.append(number)
+        with async_context:
+            return lst
+        with sync_context:
+            return lst
+        with generator_context:
+            yield from lst
+
+    assert ~function(1) == [1]
+    assert ~function(2) == [1, 2]
+
+    assert run(function(3)) == [1, 2, 3]
+    assert run(function(4)) == [1, 2, 3, 4]
+
+    assert list(function(5)) == [1, 2, 3, 4, 5]
+    assert list(function(6)) == [1, 2, 3, 4, 5, 6]
+
+
+def test_string_literal_default_value_for_async_function():
+    @superfunction
+    def function(string='kek'):
+        return string
+
+    assert run(function()) == 'kek'
+
+
+def test_int_literal_default_value_for_async_function():
+    @superfunction
+    def function(number=123):
+        return number
+
+    assert run(function()) == 123
+
+
+def test_list_literal_default_value_for_async_function():
+    @superfunction
+    def function(number, lst=[]):
+        lst.append(number)
+        return lst
+
+    assert run(function(1)) == [1]
+    assert run(function(2)) == [1, 2]
+
+
+def test_string_literal_default_value_for_generator_function():
+    @superfunction
+    def function(string='kek'):
+        yield string
+
+    assert list(function()) == ['kek']
+
+
+def test_int_literal_default_value_for_generator_function():
+    @superfunction
+    def function(number=123):
+        yield number
+
+    assert list(function()) == [123]
+
+
+def test_list_literal_default_value_for_generator_function():
+    @superfunction
+    def function(number, lst=[]):
+        lst.append(number)
+        yield from lst
+
+    assert list(function(1)) == [1]
+    assert list(function(2)) == [1, 2]
