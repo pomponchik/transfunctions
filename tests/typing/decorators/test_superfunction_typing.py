@@ -16,6 +16,7 @@ from transfunctions import superfunction, sync_context, async_context, generator
 Что нужно проверить:
 
 1. Что await_it, yield_from_it и yield_it типизированы.
+2. Нельзя сохранять возвращаемое значение суперфункции в переменную.
 
 Что проверено:
 
