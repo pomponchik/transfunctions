@@ -2,7 +2,7 @@ from typing import Any, NoReturn, Generator
 from contextlib import contextmanager
 from collections.abc import Iterable
 
-from transfunctions.typing import ReturnType
+from transfunctions.typing import ReturnType, IterableWithResults
 
 
 @contextmanager
@@ -26,6 +26,6 @@ generator_context = create_generator_context()
 def await_it(some_expression: Any) -> Any:
     pass   # pragma: no cover
 
-def yield_from_it(some_iterable: Iterable[ReturnType]) -> NoReturn:  # type: ignore[misc]
+def yield_from_it(some_iterable: IterableWithResults) -> NoReturn:  # type: ignore[misc]
     for value in some_iterable:  # pragma: no cover
         return value  # type: ignore[misc]

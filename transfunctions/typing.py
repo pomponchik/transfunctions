@@ -1,5 +1,6 @@
 import sys
 from typing import TypeVar
+from collections.abc import Iterable
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -20,4 +21,9 @@ else:
 ReturnType = TypeVar('ReturnType')
 FunctionParams = ParamSpec('FunctionParams')
 
-__all__ = ('ParamSpec', 'TypeAlias', 'Callable', 'Coroutine', 'Generator', 'ReturnType', 'FunctionParams')
+if sys.version_info >= (3, 9):
+    IterableWithResults = Iterable[ReturnType]
+else:
+    IterableWithResults = Iterable
+
+__all__ = ('ParamSpec', 'TypeAlias', 'Callable', 'Coroutine', 'Generator', 'ReturnType', 'FunctionParams', 'IterableWithResults')
