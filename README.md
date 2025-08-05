@@ -297,3 +297,15 @@ However, it is not completely free. The fact is that this mode uses a special tr
 - Exceptions will not work normally inside this function. Rather, they can be picked up and intercepted in [`sys.unraisablehook`](https://docs.python.org/3/library/sys.html#sys.unraisablehook), but they will not go up the stack above this function. This is due to a feature of CPython: exceptions that occur inside callbacks for finalizing objects are completely escaped.
 
 This mode is well suited for functions such as logging or sending statistics from your code: simple functions from which no exceptions or return values are expected. In all other cases, I recommend using the tilde syntax.
+
+
+## Typing
+
+Typing is the most difficult problem we faced when developing this library. In most situations, it has already been solved, but in some cases you may still notice flaws when using `mypy` or other static type analyzers. If you encounter similar problems, please [report](https://github.com/pomponchik/transfunctions/issues) them.
+
+There are 2 main difficulties in developing typing here:
+
+- Code generation creates code in runtime that is not in the source files of your project. Whereas most type analyzers look at your code statically, at what is actually present in your files.
+- We mix several types of syntax in a single template function, but the static analyzer does not know that this is a template and part of the code will be deleted from here. In its opinion, this is the final function that will continue to be used in your project.
+
+As you can see, typing in Python is not well suited for metaprogramming. However, in this project, almost all the problems with typing turned out to be solved in one way or another. The main reason why this is so is that we mostly remove code from functions, but hardly add it there during code generation. In other words, we almost never encounter the problem of how to type the added code. This makes the solution to most typing problems accessible. However! Unfortunately, we were not able to completely hide all the typing problems under the hood, but you should still be aware of some of them if you use `mypy` or another analyzer.
