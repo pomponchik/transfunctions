@@ -6,15 +6,17 @@ from contextlib import contextmanager
 import pytest
 import full_match
 
-from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError, DualUseOfDecoratorError
+from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError, DualUseOfDecoratorError, WrongMarkerSyntaxError
 from transfunctions.transformer import FunctionTransformer
-from transfunctions import async_context, sync_context, generator_context
+from transfunctions import async_context, sync_context, generator_context, yield_from_it, await_it
 
 
 SOME_GLOBAL = 777
 
 """
 Что нужно проверить:
+
+В процессе:
 
 1 фаза:
 
@@ -24,16 +26,28 @@ SOME_GLOBAL = 777
 18. При попытке сгенерировать генераторную функцию без "yield" или "yield from" - поднимается исключение.
 19. При попытке сгенерировать обычную функцию, в которой есть "yield" или "yield from" - поднимется исключение.
 20. При попытке сгенерировать асинк функцию, в которой есть "yield" или "yield from" - поднимется исключение.
-22. При подмене имен переменных из списка все продолжает работать: 'transfunction', 'create_async_context', 'create_sync_context', 'create_generator_context', 'await_it'.
 25. Кэширование работает.
 27. Работает совмещение 2 сторонних контекстных менеджеров (как со скобками, так и без).
 28. Нельзя использовать контекстные маркеры вместе со сторонними контекстными менеджерами.
+29. Сторонние контекстные менеджеры атрибутами работают.
+30. Нельзя использовать контекстные маркеры с атрибутами.
+32. Можно указывать для аргументов и возвращаемого значения функции произвольные тайп-хинты, т.е. они присутствуют в пространстве имен, в т.ч. если какой-то тайп-хинт заалиясить.
+34. Если использовать 'yield_from_it' или 'yield_it' вне генераторного блока, поднимется исключение.
+36. yield_it базово работает.
+38. При попытке использовать yield_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
+39. При попытке написать "return yield_it(...)" будет ошибка.
+40. При попытке написать "return yield_from_it(...)" будет ошибка.
+41. Контекстные маркеры можно использовать вместе, например: "with sync_context, async_context: ...".
+43. Контекстные маркеры разного типа нельзя вкладывать друг в друга.
+44. Можно использовать переменную с именем 'wrapper'.
+
 
 2 фаза:
 
 6. Нельзя ставить декораторы поверх @transfunction (2 фаза). Реализовывать через поиск через слабые ссылки функций, у которых в .__wrapped__ находится переданная ссылка, рекурсивно. См. https://stackoverflow.com/a/73769181/14522393
 22. Декораторы ниже @transfunction - запрещены (2 фаза).
 21. Декораторы ниже @transfunction работают (2 фаза).
+22. При подмене имен переменных из списка все продолжает работать: 'transfunction', 'create_async_context', 'create_sync_context', 'create_generator_context', 'await_it'.
 
 Что проверено:
 
@@ -53,6 +67,11 @@ SOME_GLOBAL = 777
 12. Декоратор @transfunction можно использовать на методах (в т.ч. асинк и генераторных).
 26. Если функция-шаблон содержит исключительно sync_context блок, при генерации async функции в ее тело будет подставлено pass, и по аналогии с другими типами. Исключение - генераторы, там потом будет проверка на наличие yield.
 15. Сторонние контекстные менеджеры работают, как со скобками, так и без, как вне контекстных маркеров, так и внутри.
+35. yield_from_it базово работает.
+33. При попытке использовать await_it() с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
+37. При попытке использовать yield_from_it с двумя аргументами или без аргументов или с именованным аргументом будет ошибка.
+31. Дефолтные значения аргументов работают корректно при использовании литералов. При преобразовании одного шаблона в функции разных типов используется один и тот же экземпляр литерала.
+42. Дефолтные значения аргументов работают корректно при использовании переменных, с уважением к иерархии пространств имен.
 """
 
 @transfunction
@@ -1190,3 +1209,326 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
     function = template.get_generator_function()
 
     assert list(function(1, 2)) == [130]
+
+
+def test_basic_yield_from_it():
+    @transfunction
+    def template():
+        with generator_context:
+            yield_from_it([1, 2, 3])
+
+    generator_function = template.get_generator_function()
+
+    assert list(generator_function()) == [1, 2, 3]
+
+
+def test_yield_from_it_with_function_call():
+    def some_other_function():
+        return [1, 2, 3]
+
+    @transfunction
+    def template():
+        with generator_context:
+            yield_from_it(some_other_function())
+
+    generator_function = template.get_generator_function()
+
+    assert list(generator_function()) == [1, 2, 3]
+
+
+def test_await_it_with_two_arguments():
+    async def another_function():
+        return None
+
+    @transfunction
+    def template():
+        with async_context:
+            return await_it(another_function(), another_function())
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        template.get_async_function()
+
+
+def test_await_it_without_arguments():
+    @transfunction
+    def template():
+        with async_context:
+            return await_it()
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        template.get_async_function()
+
+
+def test_await_it_with_one_usual_and_one_named_arguments():
+    async def another_function():
+        return None
+
+    @transfunction
+    def template():
+        with async_context:
+            return await_it(another_function(), kek=another_function())
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        template.get_async_function()
+
+
+def test_yield_from_it_with_two_arguments():
+    @transfunction
+    def template():
+        with generator_context:
+            return yield_from_it([1, 2, 3], [1, 2, 3])
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+        template.get_generator_function()
+
+
+def test_yield_from_it_without_arguments():
+    @transfunction
+    def template():
+        with generator_context:
+            return yield_from_it()
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+        template.get_generator_function()
+
+
+def test_yield_from_it_with_one_usual_and_one_named_arguments():
+    @transfunction
+    def template():
+        with generator_context:
+            return yield_from_it([1, 2, 3], kek=[1, 2, 3])
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+        template.get_generator_function()
+
+
+def test_string_literal_default_value_for_usual_function():
+    @transfunction
+    def template(string='kek'):
+        return string
+
+    function = template.get_usual_function()
+
+    assert function() == 'kek'
+
+
+def test_int_literal_default_value_for_usual_function():
+    @transfunction
+    def template(number=123):
+        return number
+
+    function = template.get_usual_function()
+
+    assert function() == 123
+
+
+def test_list_literal_default_value_for_usual_function():
+    @transfunction
+    def template(number, lst=[]):
+        lst.append(number)
+        return lst
+
+    function = template.get_usual_function()
+
+    assert function(1) == [1]
+    assert function(2) == [1, 2]
+
+
+def test_list_literal_default_value_it_the_same_for_all_types_of_functions():
+    @transfunction
+    def template(number, lst=[]):
+        lst.append(number)
+        with async_context:
+            return lst
+        with sync_context:
+            return lst
+        with generator_context:
+            yield from lst
+
+    function = template.get_usual_function()
+
+    assert function(1) == [1]
+    assert function(2) == [1, 2]
+
+    async_function = template.get_async_function()
+
+    assert run(async_function(3)) == [1, 2, 3]
+    assert run(async_function(4)) == [1, 2, 3, 4]
+
+    generator_function = template.get_generator_function()
+
+    assert list(generator_function(5)) == [1, 2, 3, 4, 5]
+    assert list(generator_function(6)) == [1, 2, 3, 4, 5, 6]
+
+
+def test_string_literal_default_value_for_async_function():
+    @transfunction
+    def template(string='kek'):
+        return string
+
+    function = template.get_async_function()
+
+    assert run(function()) == 'kek'
+
+
+def test_int_literal_default_value_for_async_function():
+    @transfunction
+    def template(number=123):
+        return number
+
+    function = template.get_async_function()
+
+    assert run(function()) == 123
+
+
+def test_list_literal_default_value_for_async_function():
+    @transfunction
+    def template(number, lst=[]):
+        lst.append(number)
+        return lst
+
+    function = template.get_async_function()
+
+    assert run(function(1)) == [1]
+    assert run(function(2)) == [1, 2]
+
+
+def test_string_literal_default_value_for_generator_function():
+    @transfunction
+    def template(string='kek'):
+        yield string
+
+    function = template.get_generator_function()
+
+    assert list(function()) == ['kek']
+
+
+def test_int_literal_default_value_for_generator_function():
+    @transfunction
+    def template(number=123):
+        yield number
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [123]
+
+
+def test_list_literal_default_value_for_generator_function():
+    @transfunction
+    def template(number, lst=[]):
+        lst.append(number)
+        yield from lst
+
+    function = template.get_generator_function()
+
+    assert list(function(1)) == [1]
+    assert list(function(2)) == [1, 2]
+
+
+def test_nonlocal_variable_default_value_for_usual_function():
+    container = []
+    variable = 123
+
+    @transfunction
+    def template(number=variable):
+        container.append(number)
+
+    function = template.get_usual_function()
+    function()
+
+    assert container == [variable]
+
+
+def test_global_variable_default_value_for_usual_function():
+    container = []
+
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        container.append(number)
+
+    function = template.get_usual_function()
+    function()
+
+    assert container == [SOME_GLOBAL]
+
+
+def test_resetted_global_variable_default_value_for_usual_function():
+    container = []
+    SOME_GLOBAL = 'kek'
+
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        container.append(number)
+
+    function = template.get_usual_function()
+    function()
+
+    assert container == ['kek']
+
+
+def test_nonlocal_variable_default_value_for_async_function():
+    variable = 123
+
+    @transfunction
+    def template(number=variable):
+        return number
+
+    function = template.get_async_function()
+
+    assert run(function()) == variable
+
+
+def test_global_variable_default_value_for_async_function():
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        return number
+
+    function = template.get_async_function()
+
+    assert run(function()) == SOME_GLOBAL
+
+
+def test_resetted_global_variable_default_value_for_async_function():
+    SOME_GLOBAL = 'kek'
+
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        return number
+
+    function = template.get_async_function()
+
+    assert run(function()) == 'kek'
+
+
+def test_nonlocal_variable_default_value_for_generator_function():
+    variable = 123
+
+    @transfunction
+    def template(number=variable):
+        yield number
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [variable]
+
+
+def test_global_variable_default_value_for_generator_function():
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        yield number
+
+    function = template.get_generator_function()
+
+    assert list(function()) == [SOME_GLOBAL]
+
+
+def test_resetted_global_variable_default_value_for_generator_function():
+    SOME_GLOBAL = 'kek'
+
+    @transfunction
+    def template(number=SOME_GLOBAL):
+        yield number
+
+    function = template.get_generator_function()
+
+    assert list(function()) == ['kek']

@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 import pytest
 import full_match
 
-from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, WrongDecoratorSyntaxError, WrongTransfunctionSyntaxError
+from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, yield_from_it, WrongDecoratorSyntaxError, WrongTransfunctionSyntaxError, WrongMarkerSyntaxError
 
 """
 Что нужно проверить:
@@ -22,6 +22,8 @@ from transfunctions import superfunction, sync_context, async_context, generator
 6. С синтаксисом ~ нормально поднимаются исключения.
 """
 
+
+global_variable = 123
 
 def test_just_sync_call_without_breackets():
     @superfunction
@@ -439,3 +441,325 @@ def test_usual_tilde_function_with_all_content_in_async_context():
             return True
 
     assert ~function() is None
+
+
+def test_basic_yield_from_it():
+    @superfunction
+    def function():
+        with generator_context:
+            yield_from_it([1, 2, 3])
+
+    assert list(function()) == [1, 2, 3]
+
+
+def test_yield_from_it_with_function_call():
+    def some_other_function():
+        return [1, 2, 3]
+
+    @superfunction
+    def function():
+
+        with generator_context:
+            yield_from_it(some_other_function())
+
+    assert list(function()) == [1, 2, 3]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def test_await_it_with_two_arguments():
+    async def another_function():
+        return None
+
+    @superfunction
+    def template():
+        with async_context:
+            return await_it(another_function(), another_function())
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        run(template())
+
+
+def test_await_it_without_arguments():
+    @superfunction
+    def template():
+        with async_context:
+            return await_it()
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        run(template())
+
+
+def test_await_it_with_one_usual_and_one_named_arguments():
+    async def another_function():
+        return None
+
+    @superfunction
+    def template():
+        with async_context:
+            return await_it(another_function(), kek=another_function())
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+        run(template())
+
+
+def test_yield_from_it_with_two_arguments():
+    @superfunction
+    def template():
+        with generator_context:
+            return yield_from_it([1, 2, 3], [1, 2, 3])
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+        list(template())
+
+
+def test_yield_from_it_without_arguments():
+    @superfunction
+    def template():
+        with generator_context:
+            return yield_from_it()
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+        list(template())
+
+
+def test_yield_from_it_with_one_usual_and_one_named_arguments():
+    @superfunction
+    def template():
+        with generator_context:
+            return yield_from_it([1, 2, 3], kek=[1, 2, 3])
+
+    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+        list(template())
+
+
+def test_string_literal_default_value_for_usual_function_with_tilde():
+    @superfunction
+    def function(string='kek'):
+        return string
+
+    assert ~function() == 'kek'
+
+
+def test_int_literal_default_value_for_usual_function_with_tilde():
+    @superfunction
+    def function(number=123):
+        return number
+
+    assert ~function() == 123
+
+
+def test_list_literal_default_value_for_usual_function_with_tilde():
+    @superfunction
+    def function(number, lst=[]):
+        lst.append(number)
+        return lst
+
+    assert ~function(1) == [1]
+    assert ~function(2) == [1, 2]
+
+
+def test_list_literal_default_value_it_the_same_for_all_types_of_functions_when_usual_one_is_with_tilde():
+    @superfunction
+    def function(number, lst=[]):
+        lst.append(number)
+        with async_context:
+            return lst
+        with sync_context:
+            return lst
+        with generator_context:
+            yield from lst
+
+    assert ~function(1) == [1]
+    assert ~function(2) == [1, 2]
+
+    assert run(function(3)) == [1, 2, 3]
+    assert run(function(4)) == [1, 2, 3, 4]
+
+    assert list(function(5)) == [1, 2, 3, 4, 5]
+    assert list(function(6)) == [1, 2, 3, 4, 5, 6]
+
+
+def test_string_literal_default_value_for_async_function():
+    @superfunction
+    def function(string='kek'):
+        return string
+
+    assert run(function()) == 'kek'
+
+
+def test_int_literal_default_value_for_async_function():
+    @superfunction
+    def function(number=123):
+        return number
+
+    assert run(function()) == 123
+
+
+def test_list_literal_default_value_for_async_function():
+    @superfunction
+    def function(number, lst=[]):
+        lst.append(number)
+        return lst
+
+    assert run(function(1)) == [1]
+    assert run(function(2)) == [1, 2]
+
+
+def test_string_literal_default_value_for_generator_function():
+    @superfunction
+    def function(string='kek'):
+        yield string
+
+    assert list(function()) == ['kek']
+
+
+def test_int_literal_default_value_for_generator_function():
+    @superfunction
+    def function(number=123):
+        yield number
+
+    assert list(function()) == [123]
+
+
+def test_list_literal_default_value_for_generator_function():
+    @superfunction
+    def function(number, lst=[]):
+        lst.append(number)
+        yield from lst
+
+    assert list(function(1)) == [1]
+    assert list(function(2)) == [1, 2]
+
+
+def test_nonlocal_variable_default_value_for_usual_function_with_tilde():
+    variable = 123
+
+    @superfunction
+    def function(number=variable):
+        return number
+
+    assert ~function() == variable
+
+
+def test_global_variable_default_value_for_usual_function_with_tilde():
+    @superfunction
+    def function(number=global_variable):
+        return number
+
+    assert ~function() == global_variable
+
+
+def test_resetted_global_variable_default_value_for_usual_function_with_tilde():
+    global_variable = 'kek'
+
+    @superfunction
+    def function(number=global_variable):
+        return number
+
+    assert ~function() == 'kek'
+
+
+def test_nonlocal_variable_default_value_for_usual_function_without_tilde():
+    container = []
+    variable = 123
+
+    @superfunction(tilde_syntax=False)
+    def function(number=variable):
+        container.append(number)
+
+    function()
+
+    assert container == [variable]
+
+
+def test_global_variable_default_value_for_usual_function_without_tilde():
+    container = []
+
+    @superfunction(tilde_syntax=False)
+    def function(number=global_variable):
+        container.append(number)
+
+    function()
+
+    assert container == [global_variable]
+
+
+def test_resetted_global_variable_default_value_for_usual_function_without_tilde():
+    container = []
+    global_variable = 'kek'
+
+    @superfunction(tilde_syntax=False)
+    def function(number=global_variable):
+        container.append(number)
+
+    function()
+
+    assert container == ['kek']
+
+
+def test_nonlocal_variable_default_value_for_async_function():
+    variable = 123
+
+    @superfunction
+    def function(number=variable):
+        return number
+
+    assert run(function()) == variable
+
+
+def test_global_variable_default_value_for_async_function():
+    @superfunction
+    def function(number=global_variable):
+        return number
+
+    assert run(function()) == global_variable
+
+
+def test_resetted_global_variable_default_value_for_async_function():
+    global_variable = 'kek'
+
+    @superfunction
+    def function(number=global_variable):
+        return number
+
+    assert run(function()) == 'kek'
+
+
+def test_nonlocal_variable_default_value_for_generator_function():
+    variable = 123
+
+    @superfunction
+    def function(number=variable):
+        yield number
+
+    assert list(function()) == [variable]
+
+
+def test_global_variable_default_value_for_generator_function():
+    @superfunction
+    def function(number=global_variable):
+        yield number
+
+    assert list(function()) == [global_variable]
+
+
+def test_resetted_global_variable_default_value_for_generator_function():
+    global_variable = 'kek'
+
+    @superfunction
+    def function(number=global_variable):
+        yield number
+
+    assert list(function()) == ['kek']

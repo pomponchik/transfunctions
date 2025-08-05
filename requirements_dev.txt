@@ -1,8 +1,9 @@
-pytest==7.4.3
+pytest==8.0.2
 coverage==7.6.1
 build==1.2.2.post1
 twine==6.1.0
 mypy==1.14.1
+pytest-mypy-testing==0.1.3
 ruff==0.9.9
 mutmut==3.2.3
 full_match==0.0.2

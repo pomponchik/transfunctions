@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transfunctions"
-version = "0.0.7"
+version = "0.0.8"
 authors = [
   { name="Evgeniy Blinov", email="zheni-b@yandex.ru" },
 ]
@@ -16,6 +16,7 @@ dependencies = [
     'dill==0.4.0',
     'typing_extensions ; python_version <= "3.10"',
 ]
+
 classifiers = [
     "Operating System :: OS Independent",
     'Operating System :: MacOS :: MacOS X',
@@ -51,6 +52,11 @@ keywords = [
 [tool.mutmut]
 paths_to_mutate="transfunctions"
 runner="pytest"
+
+[tool.pytest.ini_options]
+markers = [
+    "mypy_testing",
+]
 
 [project.urls]
 'Source' = 'https://github.com/pomponchik/transfunctions'

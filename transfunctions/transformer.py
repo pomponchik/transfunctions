@@ -1,18 +1,47 @@
+import ast
+from ast import (
+    AST,
+    Assign,
+    AsyncFunctionDef,
+    Await,
+    Call,
+    Constant,
+    FunctionDef,
+    Load,
+    Name,
+    NodeTransformer,
+    Pass,
+    Return,
+    Store,
+    With,
+    arguments,
+    increment_lineno,
+    parse,
+    YieldFrom,
+)
+from functools import update_wrapper, wraps
+from inspect import getfile, getsource, iscoroutinefunction, isfunction
 from sys import version_info
-from typing import Optional, Union, List, Dict, Any
-from types import MethodType, FunctionType
-from collections.abc import Callable
-from inspect import isfunction, iscoroutinefunction, getsource, getfile
-from ast import parse, NodeTransformer, AST, FunctionDef, AsyncFunctionDef, increment_lineno, Await, Call, With, Return, Name, Load, Assign, Constant, Store, Pass, arguments
-from functools import wraps, update_wrapper
+from types import FunctionType, MethodType, FrameType
+from typing import Any, Dict, Generic, List, Optional, Union, cast
 
 from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
 
-from transfunctions.errors import CallTransfunctionDirectlyError, DualUseOfDecoratorError, WrongDecoratorSyntaxError
+from transfunctions.errors import (
+    AliasedDecoratorSyntaxError,
+    CallTransfunctionDirectlyError,
+    DualUseOfDecoratorError,
+    WrongDecoratorSyntaxError,
+    WrongMarkerSyntaxError,
+)
+from transfunctions.typing import Coroutine, Callable, Generator, FunctionParams, ReturnType
+from transfunctions.universal_namespace import UniversalNamespaceAroundFunction
 
 
-class FunctionTransformer:
-    def __init__(self, function: Callable, decorator_lineno: int, decorator_name: str) -> None:
+class FunctionTransformer(Generic[FunctionParams, ReturnType]):
+    def __init__(
+        self, function: Callable[FunctionParams, ReturnType], decorator_lineno: int, decorator_name: str, frame: FrameType,
+    ) -> None:
         if isinstance(function, type(self)):
             raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
         if not isfunction(function):
@@ -25,6 +54,7 @@ class FunctionTransformer:
         self.function = function
         self.decorator_lineno = decorator_lineno
         self.decorator_name = decorator_name
+        self.frame = frame
         self.base_object = None
         self.cache: Dict[str, Callable] = {}
 
@@ -41,10 +71,10 @@ class FunctionTransformer:
         lambda_example = lambda: 0  # noqa: E731
         return isinstance(function, type(lambda_example)) and function.__name__ == lambda_example.__name__
 
-    def get_usual_function(self, addictional_transformers: Optional[List[NodeTransformer]] = None):
+    def get_usual_function(self, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[FunctionParams, ReturnType]:
         return self.extract_context('sync_context', addictional_transformers=addictional_transformers)
 
-    def get_async_function(self):
+    def get_async_function(self) -> Callable[FunctionParams, Coroutine[Any, Any, ReturnType]]:
         original_function = self.function
 
         class ConvertSyncFunctionToAsync(NodeTransformer):
@@ -56,17 +86,24 @@ class FunctionTransformer:
                         body=node.body,
                         decorator_list=node.decorator_list,
                         lineno=node.lineno,
+                        end_lineno=node.end_lineno,
                         col_offset=node.col_offset,
+                        end_col_offset=node.end_col_offset,
                     )
                 return node
 
         class ExtractAwaitExpressions(NodeTransformer):
             def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
-                if node.func.id == 'await_it':
+                if isinstance(node.func, Name) and node.func.id == 'await_it':
+                    if len(node.args) != 1 or node.keywords:
+                        raise WrongMarkerSyntaxError('The "await_it" marker can be used with only one positional argument.')
+
                     return Await(
                         value=node.args[0],
                         lineno=node.lineno,
+                        end_lineno=node.end_lineno,
                         col_offset=node.col_offset,
+                        end_col_offset=node.end_col_offset,
                     )
                 return node
 
@@ -78,8 +115,28 @@ class FunctionTransformer:
             ],
         )
 
-    def get_generator_function(self):
-        return self.extract_context('generator_context')
+    def get_generator_function(self) -> Callable[FunctionParams, Generator[ReturnType, None, None]]:
+        class ConvertYieldFroms(NodeTransformer):
+            def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
+                if isinstance(node.func, Name) and node.func.id == 'yield_from_it':
+                    if len(node.args) != 1 or node.keywords:
+                        raise WrongMarkerSyntaxError('The "yield_from_it" marker can be used with only one positional argument.')
+
+                    return YieldFrom(
+                        value=node.args[0],
+                        lineno=node.lineno,
+                        end_lineno=node.end_lineno,
+                        col_offset=node.col_offset,
+                        end_col_offset=node.end_col_offset,
+                    )
+                return node
+
+        return self.extract_context(
+            'generator_context',
+            addictional_transformers=[
+                ConvertYieldFroms(),
+            ],
+        )
 
     @staticmethod
     def clear_spaces_from_source_code(source_code: str) -> str:
@@ -116,11 +173,11 @@ class FunctionTransformer:
                 if len(node.items) == 1:
                     if isinstance(node.items[0].context_expr, Name):
                         context_expr = node.items[0].context_expr
-                    elif isinstance(node.items[0].context_expr, Call):
+                    elif isinstance(node.items[0].context_expr, Call) and isinstance(node.items[0].context_expr.func, ast.Name):
                         context_expr = node.items[0].context_expr.func
 
                     if context_expr.id == context_name:
-                        return node.body
+                        return cast(List[AST], node.body)
                     if context_expr.id != context_name and context_expr.id in ('async_context', 'sync_context', 'generator_context'):
                         return None
                 return node
@@ -137,7 +194,11 @@ class FunctionTransformer:
                     for decorator in node.decorator_list:
                         if isinstance(decorator, Call):
                             decorator = decorator.func
-                        if decorator.id != decorator_name:
+
+                        if (
+                            isinstance(decorator, Name)
+                            and decorator.id != decorator_name
+                        ):
                             raise WrongDecoratorSyntaxError(f'The @{decorator_name} decorator cannot be used in conjunction with other decorators.')
                         else:
                             if transfunction_decorator is not None:
@@ -150,8 +211,14 @@ class FunctionTransformer:
         RewriteContexts().visit(tree)
         DeleteDecorator().visit(tree)
 
-        if not tree.body[0].body:
-            tree.body[0].body.append(
+        if transfunction_decorator is None:
+            raise AliasedDecoratorSyntaxError(
+                "The transfunction decorator must have been renamed."
+            )
+
+        function_def = cast(FunctionDef, tree.body[0])
+        if not function_def.body:
+            function_def.body.append(
                 Pass(
                     col_offset=tree.body[0].col_offset,
                 ),
@@ -169,7 +236,7 @@ class FunctionTransformer:
             increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1))
 
         code = compile(tree, filename=getfile(self.function), mode='exec')
-        namespace: Dict[str, Callable] = {}
+        namespace = UniversalNamespaceAroundFunction(self.function, self.frame)
         exec(code, namespace)
         function_factory = namespace['wrapper']
         result = function_factory()
