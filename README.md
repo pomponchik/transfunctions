@@ -21,6 +21,7 @@ This library is designed to solve one of the most important problems in python p
 - [**Code generation**](#code-generation)
 - [**Markers**](#markers)
 - [**Superfunctions**](#superfunctions)
+- [**Typing**](#typing)
 
 
 ## Quick start
