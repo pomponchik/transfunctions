@@ -2,7 +2,7 @@ from typing import Any, NoReturn, Generator
 from contextlib import contextmanager
 from collections.abc import Iterable
 
-from transfunctions.typing import ReturnType, IterableWithResults
+from transfunctions.typing import IterableWithResults
 
 
 @contextmanager
