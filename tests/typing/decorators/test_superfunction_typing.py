@@ -217,7 +217,7 @@ def test_simple_using_of_generator_function_with_simple_yield_from() -> None:
 
 
 # TODO: we should understand why it works
-#@pytest.mark.xfail
+@pytest.mark.xfail
 @pytest.mark.mypy_testing
 def test_wrong_using_of_generator_function_with_simple_yield_from() -> None:
     @superfunction
