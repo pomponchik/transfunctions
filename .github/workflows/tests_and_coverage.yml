@@ -25,9 +25,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements_dev.txt') }}
+          key: ${{ runner.os }}-pip-${{ github.workflow }}-${{ hashFiles('requirements_dev.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-pip-${{ github.workflow }}-
 
       - name: Install dependencies
         shell: bash
