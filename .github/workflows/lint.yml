@@ -24,6 +24,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ github.workflow }}-${{ hashFiles('requirements_dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-${{ github.workflow }}-
+
       - name: Install dependencies
         shell: bash
         run: pip install -r requirements_dev.txt
