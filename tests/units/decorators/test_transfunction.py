@@ -1532,3 +1532,19 @@ def test_resetted_global_variable_default_value_for_generator_function():
     function = template.get_generator_function()
 
     assert list(function()) == ['kek']
+
+
+def test_use_decorator_without_at():
+    def template():
+        pass
+
+    template = transfunction(template)
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        template.get_usual_function()
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        template.get_async_function()
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        template.get_generator_function()
