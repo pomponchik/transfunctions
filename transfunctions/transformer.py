@@ -57,7 +57,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         self.decorator_name = decorator_name
         self.frame = frame
         self.base_object: Optional[SomeClassInstance] = None  # type: ignore[valid-type]
-        self.cache: Dict[str, Callable] = {}
+        self.cache: Dict[str, Callable[FunctionParams, ReturnType]] = {}
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
         raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
@@ -71,13 +71,13 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         return self
 
     @staticmethod
-    def is_lambda(function: Callable) -> bool:
+    def is_lambda(function: Callable[FunctionParams, ReturnType]) -> bool:
         # https://stackoverflow.com/a/3655857/14522393
         lambda_example = lambda: 0  # noqa: E731
         return isinstance(function, type(lambda_example)) and function.__name__ == lambda_example.__name__
 
     def get_usual_function(self, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[FunctionParams, ReturnType]:
-        return self.extract_context('sync_context', addictional_transformers=addictional_transformers)
+        return cast(Callable[FunctionParams, ReturnType], self.extract_context('sync_context', addictional_transformers=addictional_transformers))
 
     def get_async_function(self) -> Callable[FunctionParams, Coroutine[Any, Any, ReturnType]]:
         original_function = self.function
@@ -112,12 +112,15 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                     )
                 return node
 
-        return self.extract_context(
-            'async_context',
-            addictional_transformers=[
-                ConvertSyncFunctionToAsync(),
-                ExtractAwaitExpressions(),
-            ],
+        return cast(
+            Callable[FunctionParams, Coroutine[Any, Any, ReturnType]],
+            self.extract_context(
+                'async_context',
+                addictional_transformers=[
+                    ConvertSyncFunctionToAsync(),
+                    ExtractAwaitExpressions(),
+                ],
+            ),
         )
 
     def get_generator_function(self) -> Callable[FunctionParams, Generator[ReturnType, None, None]]:
@@ -136,11 +139,14 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                     )
                 return node
 
-        return self.extract_context(
-            'generator_context',
-            addictional_transformers=[
-                ConvertYieldFroms(),
-            ],
+        return cast(
+            Callable[FunctionParams, Generator[ReturnType, None, None]],
+            self.extract_context(
+                'generator_context',
+                addictional_transformers=[
+                    ConvertYieldFroms(),
+                ],
+            ),
         )
 
     @staticmethod
@@ -159,7 +165,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         return '\n'.join(new_splitted_source_code)
 
 
-    def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None):
+    def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[FunctionParams, Union[Coroutine[Any, Any, ReturnType], Generator[ReturnType, None, None], ReturnType]]:
         if context_name in self.cache:
             return self.cache[context_name]
         try:
