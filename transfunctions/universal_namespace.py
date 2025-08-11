@@ -6,7 +6,7 @@ import builtins
 class Nothing:
     pass
 
-class UniversalNamespaceAroundFunction(dict):
+class UniversalNamespaceAroundFunction(Dict[str, Any]):
     def __init__(self, function, frame: Optional[FrameType]) -> None:
         self.function = function
         self.frame = frame
