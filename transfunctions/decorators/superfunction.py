@@ -61,7 +61,7 @@ class UsageTracer(Generic[FunctionParams, ReturnType], Coroutine[Any, None, Retu
     def send(self, value: Any) -> Any:
         return self.coroutine.send(value)
 
-    def throw(self, exception_type: Type[BaseException], value: Any = None, traceback: Optional[TracebackType] = None) -> None:  # pragma: no cover
+    def throw(self, exception_type: Type[BaseException], value: Optional[BaseException] = None, traceback: Optional[TracebackType] = None) -> None:  # type: ignore[override] # pragma: no cover
         pass
 
     def close(self) -> None:  # pragma: no cover
