@@ -25,6 +25,6 @@ SomeClassInstance = TypeVar('SomeClassInstance')
 if sys.version_info >= (3, 9):
     IterableWithResults = Iterable[ReturnType]
 else:
-    IterableWithResults = Iterable
+    IterableWithResults = Iterable  # pragma: no cover
 
 __all__ = ('ParamSpec', 'TypeAlias', 'Callable', 'Coroutine', 'Generator', 'ReturnType', 'FunctionParams', 'IterableWithResults', 'SomeClassInstance')
