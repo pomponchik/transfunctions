@@ -43,7 +43,7 @@ jobs:
 
       - name: Run mypy
         shell: bash
-        run: mypy --check transfunctions
+        run: mypy transfunctions
 
       - name: Run mypy for tests
         shell: bash

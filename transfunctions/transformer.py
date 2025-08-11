@@ -175,7 +175,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         converted_source_code = self.clear_spaces_from_source_code(source_code)
         tree = parse(converted_source_code)
         original_function = self.function
-        transfunction_decorator = None
+        transfunction_decorator: Optional[Name] = None
         decorator_name = self.decorator_name
 
         class RewriteContexts(NodeTransformer):
@@ -213,7 +213,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                         else:
                             if transfunction_decorator is not None:
                                 raise DualUseOfDecoratorError(f"You cannot use the @{decorator_name} decorator twice for the same function.")
-                            transfunction_decorator = decorator
+                            transfunction_decorator = cast(Name, decorator)
 
                     node.decorator_list = []
                 return node
@@ -236,9 +236,9 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         tree = self.wrap_ast_by_closures(tree)
 
         if version_info.minor > 10:
-            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno))
+            increment_lineno(tree, n=(self.decorator_lineno - cast(Name, transfunction_decorator).lineno))
         else:
-            increment_lineno(tree, n=(self.decorator_lineno - transfunction_decorator.lineno - 1))
+            increment_lineno(tree, n=(self.decorator_lineno - cast(Name, transfunction_decorator).lineno - 1))
 
         code = compile(tree, filename=getfile(self.function), mode='exec')
         namespace = UniversalNamespaceAroundFunction(self.function, self.frame)
