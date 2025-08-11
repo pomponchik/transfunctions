@@ -213,7 +213,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                             raise WrongDecoratorSyntaxError(f'The @{decorator_name} decorator cannot be used in conjunction with other decorators.')
                         else:
                             if transfunction_decorator is not None:
-                                raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
+                                raise DualUseOfDecoratorError(f"You cannot use the @{decorator_name} decorator twice for the same function.")
                             transfunction_decorator = decorator
 
                     node.decorator_list = []
