@@ -2,12 +2,14 @@ from typing import Dict, Optional, Any
 from types import FrameType
 import builtins
 
+from transfunctions.typing import Callable, FunctionParams, ReturnType
+
 
 class Nothing:
     pass
 
 class UniversalNamespaceAroundFunction(Dict[str, Any]):
-    def __init__(self, function, frame: Optional[FrameType]) -> None:
+    def __init__(self, function: Callable[FunctionParams, ReturnType], frame: Optional[FrameType]) -> None:
         self.function = function
         self.frame = frame
         self.results: Dict[str, Any] = {}
