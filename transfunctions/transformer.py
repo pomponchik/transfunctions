@@ -83,7 +83,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         original_function = self.function
 
         class ConvertSyncFunctionToAsync(NodeTransformer):
-            def visit_FunctionDef(self, node: FunctionDef) -> Optional[Union[AST, List[AST]]]:
+            def visit_FunctionDef(self, node: FunctionDef) -> Union[FunctionDef, AsyncFunctionDef]:
                 if node.name == original_function.__name__:
                     return AsyncFunctionDef(
                         name=original_function.__name__,
