@@ -763,3 +763,21 @@ def test_resetted_global_variable_default_value_for_generator_function():
         yield number
 
     assert list(function()) == ['kek']
+
+
+def test_use_decorator_without_at():
+    def template():
+        pass
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @superfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        function = superfunction(template)
+        ~function()
+
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @superfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        function = superfunction(template)
+        run(function())
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @superfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        function = superfunction(template)
+        list(function())
