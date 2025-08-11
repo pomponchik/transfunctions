@@ -29,7 +29,6 @@ from typing import Any, Dict, Generic, List, Optional, Union, Type, cast
 from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
 
 from transfunctions.errors import (
-    AliasedDecoratorSyntaxError,
     CallTransfunctionDirectlyError,
     DualUseOfDecoratorError,
     WrongDecoratorSyntaxError,
