@@ -222,11 +222,6 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         RewriteContexts().visit(tree)
         DeleteDecorator().visit(tree)
 
-        if transfunction_decorator is None:
-            raise AliasedDecoratorSyntaxError(
-                "The transfunction decorator must have been renamed."
-            )
-
         function_def = cast(FunctionDef, tree.body[0])
         if not function_def.body:
             function_def.body.append(
