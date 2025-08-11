@@ -118,7 +118,6 @@ def superfunction(  # type: ignore[misc]
         )
 
         if not tilde_syntax:
-
             class NoReturns(NodeTransformer):
                 def visit_Return(self, node: Return) -> Optional[Union[AST, List[AST]]]:
                     raise WrongTransfunctionSyntaxError('A superfunction cannot contain a return statement.')
