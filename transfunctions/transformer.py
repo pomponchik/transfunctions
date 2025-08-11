@@ -262,7 +262,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
         self.cache[context_name] = result
 
-        return result
+        return result  # type: ignore[no-any-return]
 
     def wrap_ast_by_closures(self, tree: Module) -> Module:
         old_functiondef = tree.body[0]

@@ -14,4 +14,4 @@ def transfunction(
         cast(FrameType, cast(FrameType, currentframe()).f_back).f_lineno,
         "transfunction",
         cast(FrameType, cast(FrameType, currentframe()).f_back),
-    )  # type: ignore[union-attr]
+    )

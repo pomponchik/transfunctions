@@ -25,6 +25,6 @@ generator_context = create_generator_context()
 def await_it(some_expression: Any) -> Any:
     pass   # pragma: no cover
 
-def yield_from_it(some_iterable: IterableWithResults) -> NoReturn:  # type: ignore[misc]
+def yield_from_it(some_iterable: IterableWithResults) -> NoReturn:  # type: ignore[misc, type-arg]
     for value in some_iterable:  # pragma: no cover
         return value  # type: ignore[misc]
