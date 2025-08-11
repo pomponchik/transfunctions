@@ -98,7 +98,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                 return node
 
         class ExtractAwaitExpressions(NodeTransformer):
-            def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
+            def visit_Call(self, node: Call) -> Union[Call, Await]:
                 if isinstance(node.func, Name) and node.func.id == 'await_it':
                     if len(node.args) != 1 or node.keywords:
                         raise WrongMarkerSyntaxError('The "await_it" marker can be used with only one positional argument.')
