@@ -7,6 +7,7 @@ from ast import (
     Call,
     Constant,
     FunctionDef,
+    Module,
     Load,
     Name,
     NodeTransformer,
@@ -23,7 +24,7 @@ from functools import update_wrapper, wraps
 from inspect import getfile, getsource, iscoroutinefunction, isfunction
 from sys import version_info
 from types import FunctionType, MethodType, FrameType
-from typing import Any, Dict, Generic, List, Optional, Union, cast
+from typing import Any, Dict, Generic, List, Optional, Union, Type, cast
 
 from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
 
@@ -34,7 +35,7 @@ from transfunctions.errors import (
     WrongDecoratorSyntaxError,
     WrongMarkerSyntaxError,
 )
-from transfunctions.typing import Coroutine, Callable, Generator, FunctionParams, ReturnType
+from transfunctions.typing import Coroutine, Callable, Generator, FunctionParams, ReturnType, SomeClassInstance
 from transfunctions.universal_namespace import UniversalNamespaceAroundFunction
 
 
@@ -55,13 +56,17 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         self.decorator_lineno = decorator_lineno
         self.decorator_name = decorator_name
         self.frame = frame
-        self.base_object = None
+        self.base_object: Optional[SomeClassInstance] = None  # type: ignore[valid-type]
         self.cache: Dict[str, Callable] = {}
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
         raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
 
-    def __get__(self, base_object, type=None):
+    def __get__(
+        self,
+        base_object: SomeClassInstance,
+        owner: Type[SomeClassInstance],
+    ) -> 'FunctionTransformer[FunctionParams, ReturnType]':
         self.base_object = base_object
         return self
 
@@ -253,7 +258,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
         return result
 
-    def wrap_ast_by_closures(self, tree):
+    def wrap_ast_by_closures(self, tree: Module) -> Module:
         old_functiondef = tree.body[0]
 
         tree.body[0] = FunctionDef(
@@ -276,7 +281,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         return tree
 
 
-    def rewrite_globals_and_closure(self, function):
+    def rewrite_globals_and_closure(self, function: FunctionType) -> FunctionType:
         # https://stackoverflow.com/a/13503277/14522393
         all_new_closure_names = set(self.function.__code__.co_freevars)
 
@@ -297,6 +302,6 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
             closure=filtered_closure,
         )
 
-        new_function = update_wrapper(new_function, function)
+        new_function = cast(FunctionType, update_wrapper(new_function, function))
         new_function.__kwdefaults__ = function.__kwdefaults__
         return new_function

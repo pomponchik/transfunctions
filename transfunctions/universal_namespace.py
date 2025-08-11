@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Optional, Any
 from types import FrameType
 import builtins
 
@@ -7,7 +7,7 @@ class Nothing:
     pass
 
 class UniversalNamespaceAroundFunction(dict):
-    def __init__(self, function, frame: FrameType) -> None:
+    def __init__(self, function, frame: Optional[FrameType]) -> None:
         self.function = function
         self.frame = frame
         self.results: Dict[str, Any] = {}

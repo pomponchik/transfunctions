@@ -20,10 +20,11 @@ else:
 
 ReturnType = TypeVar('ReturnType')
 FunctionParams = ParamSpec('FunctionParams')
+SomeClassInstance = TypeVar('SomeClassInstance')
 
 if sys.version_info >= (3, 9):
     IterableWithResults = Iterable[ReturnType]
 else:
     IterableWithResults = Iterable
 
-__all__ = ('ParamSpec', 'TypeAlias', 'Callable', 'Coroutine', 'Generator', 'ReturnType', 'FunctionParams', 'IterableWithResults')
+__all__ = ('ParamSpec', 'TypeAlias', 'Callable', 'Coroutine', 'Generator', 'ReturnType', 'FunctionParams', 'IterableWithResults', 'SomeClassInstance')

@@ -2,7 +2,8 @@ import weakref
 from ast import AST, NodeTransformer, Return
 from functools import wraps
 from inspect import currentframe
-from typing import Any, Dict, Generic, List, Optional, Union, overload
+from typing import Any, Dict, Generic, List, Optional, Union, Type, overload, cast
+from types import FrameType, TracebackType
 
 from displayhooks import not_display
 
@@ -60,7 +61,7 @@ class UsageTracer(Generic[FunctionParams, ReturnType], Coroutine[Any, None, Retu
     def send(self, value: Any) -> Any:
         return self.coroutine.send(value)
 
-    def throw(self, exception_type: Any, value: Any = None, traceback: Any = None) -> None:  # pragma: no cover
+    def throw(self, exception_type: Type[BaseException], value: Any = None, traceback: Optional[TracebackType] = None) -> None:  # pragma: no cover
         pass
 
     def close(self) -> None:  # pragma: no cover
@@ -111,9 +112,9 @@ def superfunction(  # type: ignore[misc]
     def decorator(function: Callable[FunctionParams, ReturnType]) -> Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]:
         transformer = FunctionTransformer(
             function,
-            currentframe().f_back.f_lineno,  # type: ignore[union-attr]
+            cast(FrameType, cast(FrameType, currentframe()).f_back).f_lineno,
             "superfunction",
-            currentframe().f_back,
+            cast(FrameType, cast(FrameType, currentframe()).f_back),
         )
 
         if not tilde_syntax:
