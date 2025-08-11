@@ -40,3 +40,11 @@ jobs:
       - name: Run ruff for tests
         shell: bash
         run: ruff check tests
+
+      - name: Run mypy
+        shell: bash
+        run: mypy transfunctions
+
+      - name: Run mypy for tests
+        shell: bash
+        run: mypy tests --exclude typing
