@@ -14,12 +14,28 @@ jobs:
   code-review:
     runs-on: ubuntu-latest
     steps:
+      # Restore cached Ollama models to speed up CI runs
+      - name: Restore Ollama model cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama/models
+          key: ${{ runner.os }}-codellama-model
+          restore-keys: |
+            ${{ runner.os }}-codellama-
+
+      # Install ollama
       - name: Setup ollama
         uses: ai-action/setup-ollama@v1
 
+      # Pull the codellama model if it hasn't been cached yet
+      - name: Download codellama model
+        run: ollama pull codellama
+
+      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Run code review and comment on PR
       - name: Code review comment
         run: |
           PROMPT='Here is the code, find all the problems and flaws in it, pay attention to both stylistic flaws and vulnerabilities:'
