@@ -38,7 +38,7 @@ jobs:
       # Run code review and comment on PR
       - name: Code review comment
         run: |
-          PROMPT="Now I'll give you the code (actually it's just a diff), your task is to find all the vulnerabilities and flaws in it that you can find. Report each vulnerability only if you are SURE that it is indeed a vulnerability. Accompany each item with a markdown block with an example code that would fix this problem, if you can think of one. So, here's the code:"
+          PROMPT="you are given a code (diff from github to be exact). Assume that it's ok by default and answer with 'No problems has been found' if you don't see any critical problems. If you are sure that you spotted a 100% problem, please double-check if you are correct, then give a short answer as to what the problem is. Rarely, you may spot multiple problems. If so, use markdown blocks for each item. Specify extra details only if critically nesseccery. Here's the code given:"
           RESPONSE=$(ollama run hhao/qwen2.5-coder-tools:0.5b "$PROMPT\n$(gh pr diff $PR_NUMBER)")
           gh pr comment $PR_NUMBER --body "$RESPONSE"
         env:
