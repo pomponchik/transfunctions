@@ -29,7 +29,7 @@ jobs:
 
       # Pull the codellama model if it hasn't been cached yet
       - name: Download codellama model
-        run: ollama pull codellama
+        run: ollama pull hhao/qwen2.5-coder-tools:0.5b
 
       # Checkout repository
       - name: Checkout repository
@@ -39,7 +39,7 @@ jobs:
       - name: Code review comment
         run: |
           PROMPT="Now I'll give you the code (actually it's just a diff), your task is to find all the vulnerabilities and flaws in it that you can find. Report each vulnerability only if you are SURE that it is indeed a vulnerability. Accompany each item with a markdown block with an example code that would fix this problem, if you can think of one. So, here's the code:"
-          RESPONSE=$(ollama run codellama "$PROMPT\n$(gh pr diff $PR_NUMBER)")
+          RESPONSE=$(ollama run hhao/qwen2.5-coder-tools:0.5b "$PROMPT\n$(gh pr diff $PR_NUMBER)")
           gh pr comment $PR_NUMBER --body "$RESPONSE"
         env:
           GH_TOKEN: ${{ github.token }}
