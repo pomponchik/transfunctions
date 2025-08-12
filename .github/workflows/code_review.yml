@@ -1,6 +1,10 @@
 # https://remarkablemark.org/blog/2025/02/23/run-ollama-large-language-models-on-github-actions/
 name: Code Review
-on: pull_request
+
+on:
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
