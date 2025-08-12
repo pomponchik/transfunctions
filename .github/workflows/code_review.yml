@@ -1,5 +1,5 @@
 # https://remarkablemark.org/blog/2025/02/23/run-ollama-large-language-models-on-github-actions/
-name: Code Review
+name: A very stupid code review
 
 on:
   pull_request:
@@ -10,12 +10,15 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  MODEL: hhao/qwen2.5-coder-tools:0.5b
+  BOT_NAME: Stupid bot
+
 jobs:
   code-review:
     runs-on: ubuntu-latest
     steps:
-      # Restore cached Ollama models to speed up CI runs
-      - name: Restore Ollama model cache
+      - name: Restore the model cache
         uses: actions/cache@v4
         with:
           path: ~/.ollama/models
@@ -27,9 +30,9 @@ jobs:
       - name: Setup ollama
         uses: ai-action/setup-ollama@v1
 
-      # Pull the codellama model if it hasn't been cached yet
-      - name: Download codellama model
-        run: ollama pull hhao/qwen2.5-coder-tools:0.5b
+      # Pull the model if it hasn't been cached yet
+      - name: Download the model
+        run: ollama pull ${{ env.MODEL }}
 
       # Checkout repository
       - name: Checkout repository
@@ -39,8 +42,8 @@ jobs:
       - name: Code review comment
         run: |
           PROMPT="you are given a code (diff from github to be exact). Assume that it's ok by default and answer with 'No problems has been found' if you don't see any critical problems. If you are sure that you spotted a 100% problem, please double-check if you are correct, then give a short answer as to what the problem is. Rarely, you may spot multiple problems. If so, use markdown blocks for each item. Specify extra details only if critically nesseccery. Here's the code given:"
-          RESPONSE=$(ollama run hhao/qwen2.5-coder-tools:0.5b "$PROMPT\n$(gh pr diff $PR_NUMBER)")
-          gh pr comment $PR_NUMBER --body "$RESPONSE"
+          RESPONSE=$(ollama run ${{ env.MODEL }} "$PROMPT\n$(gh pr diff $PR_NUMBER)")
+          gh pr comment $PR_NUMBER --body "$RESPONSE" --author ${{ env.BOT_NAME }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
