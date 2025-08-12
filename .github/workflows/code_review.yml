@@ -23,9 +23,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.ollama/models
-          key: ${{ runner.os }}-codellama-model
+          key: ${{ runner.os }}-${{ env.MODEL }}
           restore-keys: |
-            ${{ runner.os }}-codellama-
+            ${{ runner.os }}-${{ env.MODEL }}
 
       # Install ollama
       - name: Setup ollama
