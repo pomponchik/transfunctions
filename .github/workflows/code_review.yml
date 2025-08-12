@@ -1,4 +1,5 @@
-# https://remarkablemark.org/blog/2025/02/23/run-ollama-large-language-models-on-github-actions/
+# This workflow runs a locally‑hosted LLM inside the runner to generate critical comments on pull requests
+# Based on: https://remarkablemark.org/blog/2025/02/23/run-ollama-large-language-models-on-github-actions/
 name: A very stupid code review
 
 on:
