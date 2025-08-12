@@ -14,5 +14,5 @@ uv.lock
 .history
 .vscode/
 .idea/
-temp*
 .ropeproject
+node_modules
