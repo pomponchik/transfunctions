@@ -44,7 +44,7 @@ jobs:
         run: |
           PROMPT="you are given a code (diff from github to be exact). Assume that it's ok by default and answer with 'No problems has been found' if you don't see any critical problems. If you are sure that you spotted a 100% problem, please double-check if you are correct, then give a short answer as to what the problem is. Rarely, you may spot multiple problems. If so, use markdown blocks for each item. Specify extra details only if critically nesseccery. Here's the code given:"
           RESPONSE=$(ollama run ${{ env.MODEL }} "$PROMPT\n$(gh pr diff $PR_NUMBER)")
-          gh pr comment $PR_NUMBER --body "$RESPONSE" --author ${{ env.BOT_NAME }}
+          gh pr comment $PR_NUMBER --body "$RESPONSE"
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
