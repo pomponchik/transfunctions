@@ -22,7 +22,7 @@ jobs:
 
       - name: Code review comment
         run: |
-          PROMPT='Code review the changes below:'
+          PROMPT='Here is the code, find all the problems and flaws in it, pay attention to both stylistic flaws and vulnerabilities:'
           RESPONSE=$(ollama run codellama "$PROMPT\n$(gh pr diff $PR_NUMBER)")
           gh pr comment $PR_NUMBER --body "$RESPONSE"
         env:
