@@ -38,7 +38,7 @@ jobs:
       # Run code review and comment on PR
       - name: Code review comment
         run: |
-          PROMPT='Here is the code, find all the problems and flaws in it, pay attention to both stylistic flaws and vulnerabilities:'
+          PROMPT='Now I'll give you the code (actually it's just a diff), your task is to find all the vulnerabilities and flaws in it that you can find. Report each vulnerability only if you are SURE that it is indeed a vulnerability. Accompany each item with a markdown block with an example code that would fix this problem, if you can think of one. So, here's the code:'
           RESPONSE=$(ollama run codellama "$PROMPT\n$(gh pr diff $PR_NUMBER)")
           gh pr comment $PR_NUMBER --body "$RESPONSE"
         env:
