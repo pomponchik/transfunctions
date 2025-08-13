@@ -13,7 +13,6 @@ permissions:
 
 env:
   MODEL: kirito1/qwen3-coder:4b
-  BOT_NAME: Stupid bot
   PROMPT: |
     Please review the code.
 
