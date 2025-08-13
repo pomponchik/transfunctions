@@ -12,7 +12,7 @@ permissions:
   pull-requests: write
 
 env:
-  MODEL: hhao/qwen2.5-coder-tools:0.5b
+  MODEL: kirito1/qwen3-coder:4b
   BOT_NAME: Stupid bot
 
 jobs:
