@@ -15,18 +15,18 @@ permissions:
 env:
   MODEL: kirito1/qwen3-coder:4b
   PROMPT: |
-    Please review the code.
+    You are a code quality control agent in the repository. Your task is to identify the following problems:
 
-    Consider:
     1. Code quality and adherence to best practices
     2. Potential bugs or edge cases
     3. Performance optimizations
     4. Readability and maintainability
     5. Any security concerns
 
-    Suggest improvements and explain your reasoning for each suggestion.
+    Only if you are absolutely sure that there is a problem (check it twice) - write about it. You must explain the problem clearly, but be as short and concise as possible.
+    To clarify your thoughts, you can use blocks of code in the markdown format, but do not abuse it, use it only if you cannot convey your thoughts in a shorter way.
 
-    The code is following:
+    Here’s the code given (or rather, only a diff from PR):
 
 jobs:
   code-review:
