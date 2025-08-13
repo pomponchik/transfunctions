@@ -15,7 +15,7 @@ permissions:
 env:
   MODEL: kirito1/qwen3-coder:4b
   PROMPT: |
-    You are a code quality control agent in the repository. Your task is to identify the following problems:
+    You are a senior developer and an attentive code quality control agent in the repository. Your task is to read the code and pay attention to the following things:
 
     1. Code quality and adherence to best practices
     2. Potential bugs or edge cases
