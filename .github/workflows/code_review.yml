@@ -22,7 +22,7 @@ jobs:
       - name: Restore the model cache
         uses: actions/cache@v4
         with:
-          path: ~/.ollama/models
+          path: ~/.ollama
           key: ${{ runner.os }}-${{ env.MODEL }}
           restore-keys: |
             ${{ runner.os }}-${{ env.MODEL }}
