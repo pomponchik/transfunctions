@@ -14,6 +14,19 @@ permissions:
 env:
   MODEL: kirito1/qwen3-coder:4b
   BOT_NAME: Stupid bot
+  PROMPT: |
+    Please review the code.
+
+    Consider:
+    1. Code quality and adherence to best practices
+    2. Potential bugs or edge cases
+    3. Performance optimizations
+    4. Readability and maintainability
+    5. Any security concerns
+
+    Suggest improvements and explain your reasoning for each suggestion.
+
+    The code is following:
 
 jobs:
   code-review:
@@ -42,8 +55,7 @@ jobs:
       # Run code review and comment on PR
       - name: Code review comment
         run: |
-          PROMPT="you are given a code (diff from github to be exact). Assume that it's ok by default and answer with 'No problems has been found' if you don't see any critical problems. If you are sure that you spotted a 100% problem, please double-check if you are correct, then give a short answer as to what the problem is. Rarely, you may spot multiple problems. If so, use markdown blocks for each item. Specify extra details only if critically nesseccery. Here's the code given:"
-          RESPONSE=$(ollama run ${{ env.MODEL }} "$PROMPT\n$(gh pr diff $PR_NUMBER)")
+          RESPONSE=$(ollama run ${{ env.MODEL }} "${{ env.PROMPT }}\n$(gh pr diff $PR_NUMBER)")
           gh pr comment $PR_NUMBER --body "$RESPONSE"
         env:
           GH_TOKEN: ${{ github.token }}
