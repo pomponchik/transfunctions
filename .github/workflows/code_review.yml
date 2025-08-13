@@ -54,7 +54,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Run code review and comment on PR
+      - name: Show PROMPT
+        run: |
+          echo "PROMPT: ${{ env.PROMPT }}"
+
       - name: Code review comment
         run: |
           RESPONSE=$(ollama run ${{ env.MODEL }} "${{ env.PROMPT }}\n$(gh pr diff $PR_NUMBER)")
