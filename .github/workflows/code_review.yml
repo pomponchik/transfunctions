@@ -7,6 +7,12 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Причина запуска"
+        required: false
+        type: string
 
 permissions:
   contents: read
