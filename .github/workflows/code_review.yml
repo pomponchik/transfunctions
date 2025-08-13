@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-        description: "Причина запуска"
+        description: "Run stupid code-review"
         required: false
         type: string
 
