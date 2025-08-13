@@ -26,6 +26,8 @@ env:
     Only if you are absolutely sure that there is a problem (check it twice) - write about it. You must explain the problem clearly, but be as short and concise as possible.
     To clarify your thoughts, you can use blocks of code in the markdown format, but do not abuse it, use it only if you cannot convey your thoughts in a shorter way.
 
+    If everything is fine with the code and you don't see any obvious errors, just write: "Everything seems to be fine with the code!". Don't write anything else in this case.
+
     Here’s the code given (or rather, only a diff from PR):
 
 jobs:
