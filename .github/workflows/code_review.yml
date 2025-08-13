@@ -1,5 +1,6 @@
 # This workflow runs a locally‑hosted LLM inside the runner to generate critical comments on pull requests
 # Based on: https://remarkablemark.org/blog/2025/02/23/run-ollama-large-language-models-on-github-actions/
+# The prompt is taken from here: https://www.reddit.com/r/ChatGPTCoding/comments/1f51y8s/a_collection_of_prompts_for_generating_high/
 name: A very stupid code review
 
 on:
