@@ -5,9 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "transfunctions"
 version = "0.0.9"
-authors = [
-  { name="Evgeniy Blinov", email="zheni-b@yandex.ru" },
-]
+authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Say NO to Python fragmentation on sync and async'
 readme = "README.md"
 requires-python = ">=3.8"
@@ -30,6 +28,7 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Libraries',
@@ -50,13 +49,11 @@ keywords = [
 "transfunctions" = ["py.typed"]
 
 [tool.mutmut]
-paths_to_mutate="transfunctions"
-runner="pytest"
+paths_to_mutate = "transfunctions"
+runner = "pytest"
 
 [tool.pytest.ini_options]
-markers = [
-    "mypy_testing",
-]
+markers = ["mypy_testing"]
 
 [project.urls]
 'Source' = 'https://github.com/pomponchik/transfunctions'
