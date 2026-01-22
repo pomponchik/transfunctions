@@ -220,6 +220,77 @@ def template():
 Regular or generator functions cannot use the `await` keyword, so you will get an exception when you try to generate such a function. The same applies to the `yield` and `yield from` keywords. You cannot use them outside of code blocks that relate *only* to generator functions. Please note that not in all such cases, the `transfunctions` library will offer you an informative exception. Here you'd better rely on your own knowledge of `Python` syntax. However, even if such an exception is provided, it will only be raised when trying to generate a function of the type in which this syntax is inappropriate. At the template definition stage, you won't get an exception telling you that something went wrong, because the code generation here is lazy and the code is not analyzed for correctness in any way before you request it.
 
 
+## Custom variants and patches
+
+Along with built-in `sync_context` / `async_context` / `generator_context`, you can create **custom named variants** (N-branches) and **optional patches** (composition on top of variants).
+
+### Variants (N-branches)
+
+Use `variant_context("name")` to mark blocks that should only be included in the generated function for that variant:
+
+```python
+from transfunctions import transfunction, variant_context
+
+@transfunction(variants=["requests", "httpx"])
+def fetch_text(url: str) -> str:
+    with variant_context("requests"):
+        import requests
+        return requests.get(url).text
+
+    with variant_context("httpx"):
+        import httpx
+        return httpx.get(url).text
+
+fetch_requests = fetch_text.get_variant_function("requests")
+fetch_httpx = fetch_text.get_variant_function("httpx")
+```
+
+### Patches (composition)
+
+Use `patch_context("name")` for optional blocks that can be enabled per generated function via `patches=[...]`:
+
+```python
+from transfunctions import transfunction, variant_context, patch_context
+
+@transfunction(variants=["requests", "httpx"])
+def fetch_text(url: str) -> str:
+    with patch_context("logging"):
+        print("fetch", url)
+
+    with variant_context("requests"):
+        import requests
+        return requests.get(url).text
+
+    with variant_context("httpx"):
+        import httpx
+        return httpx.get(url).text
+
+fetch_requests_logged = fetch_text.get_variant_function("requests", patches=["logging"])
+fetch_httpx_plain = fetch_text.get_variant_function("httpx")
+```
+
+You can also limit a patch to specific variants:
+
+```python
+from transfunctions import transfunction, variant_context, patch_context
+
+@transfunction(variants=["a", "b"])
+def f() -> list[str]:
+    result: list[str] = []
+
+    with patch_context("metrics", variants=["a"]):
+        result.append("metrics")
+
+    with variant_context("a"):
+        result.append("a")
+
+    with variant_context("b"):
+        result.append("b")
+
+    return result
+```
+
+
 ## Superfunctions
 
 Superfunctions are the most powerful feature of the library. They allow you to completely "put under the hood" all the machinery for selecting the desired type of function based on the template function. The selection is completely automatic.

@@ -23,7 +23,7 @@ from functools import update_wrapper, wraps
 from inspect import getfile, getsource, iscoroutinefunction, isfunction
 from sys import version_info
 from types import FunctionType, MethodType, FrameType
-from typing import Any, Dict, Generic, List, Optional, Union, cast
+from typing import Any, Dict, Generic, List, Optional, Sequence, Set, Tuple, Union, cast, overload
 
 from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
 
@@ -40,7 +40,12 @@ from transfunctions.universal_namespace import UniversalNamespaceAroundFunction
 
 class FunctionTransformer(Generic[FunctionParams, ReturnType]):
     def __init__(
-        self, function: Callable[FunctionParams, ReturnType], decorator_lineno: int, decorator_name: str, frame: FrameType,
+        self,
+        function: Callable[FunctionParams, ReturnType],
+        decorator_lineno: int,
+        decorator_name: str,
+        frame: FrameType,
+        variants: Optional[Sequence[str]] = None,
     ) -> None:
         if isinstance(function, type(self)):
             raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
@@ -55,6 +60,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         self.decorator_lineno = decorator_lineno
         self.decorator_name = decorator_name
         self.frame = frame
+        self.variants: Optional[Tuple[str, ...]] = tuple(variants) if variants is not None else None
         self.base_object = None
         self.cache: Dict[str, Callable] = {}
 
@@ -72,9 +78,70 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         return isinstance(function, type(lambda_example)) and function.__name__ == lambda_example.__name__
 
     def get_usual_function(self, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[FunctionParams, ReturnType]:
-        return self.extract_context('sync_context', addictional_transformers=addictional_transformers)
+        return self.get_variant_function('sync', kind='sync', addictional_transformers=addictional_transformers)
 
     def get_async_function(self) -> Callable[FunctionParams, Coroutine[Any, Any, ReturnType]]:
+        return self.get_variant_function('async', kind='async')
+
+    def get_generator_function(self) -> Callable[FunctionParams, Generator[ReturnType, None, None]]:
+        return self.get_variant_function('generator', kind='generator')
+
+    def get_variants(self) -> Tuple[str, ...]:
+        """
+        Declared variants for this template (if provided in @transfunction(variants=[...])).
+        """
+        return self.variants if self.variants is not None else ()
+
+    @overload
+    def get_variant_function(
+        self,
+        variant: str,
+        *,
+        kind: str = ...,
+        patches: Optional[Sequence[str]] = ...,
+        addictional_transformers: Optional[List[NodeTransformer]] = ...,
+    ) -> Callable[FunctionParams, ReturnType]: ...
+
+    @overload
+    def get_variant_function(
+        self,
+        variant: str,
+        *,
+        kind: str,
+        patches: Optional[Sequence[str]] = ...,
+        addictional_transformers: Optional[List[NodeTransformer]] = ...,
+    ) -> Callable: ...
+
+    def get_variant_function(
+        self,
+        variant: str,
+        *,
+        kind: str = 'sync',
+        patches: Optional[Sequence[str]] = None,
+        addictional_transformers: Optional[List[NodeTransformer]] = None,
+    ) -> Callable:
+        """
+        Generate a function from the template by selecting a variant and optional patches.
+
+        - variant blocks:
+            with variant_context("trio"): ...
+        - patch blocks (optional composition):
+            with patch_context("logging"): ...
+            with patch_context("metrics", variants=["async", "trio"]): ...
+
+        Backward compatible:
+            sync_context/async_context/generator_context are treated as variants: "sync"/"async"/"generator".
+
+        kind defines the produced function type: "sync" | "async" | "generator".
+        """
+        if self.variants is not None and variant not in self.variants:
+            raise ValueError(f'Unknown variant "{variant}". Declared variants are: {list(self.variants)}')
+
+        enabled_patches: Set[str] = set(patches or ())
+        cache_key = f'{kind}:{variant}:{";".join(sorted(enabled_patches))}'
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+
         original_function = self.function
 
         class ConvertSyncFunctionToAsync(NodeTransformer):
@@ -107,15 +174,6 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                     )
                 return node
 
-        return self.extract_context(
-            'async_context',
-            addictional_transformers=[
-                ConvertSyncFunctionToAsync(),
-                ExtractAwaitExpressions(),
-            ],
-        )
-
-    def get_generator_function(self) -> Callable[FunctionParams, Generator[ReturnType, None, None]]:
         class ConvertYieldFroms(NodeTransformer):
             def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
                 if isinstance(node.func, Name) and node.func.id == 'yield_from_it':
@@ -131,12 +189,20 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                     )
                 return node
 
-        return self.extract_context(
-            'generator_context',
-            addictional_transformers=[
-                ConvertYieldFroms(),
-            ],
-        )
+        transforms: List[NodeTransformer] = []
+        if kind == 'async':
+            transforms.extend([ConvertSyncFunctionToAsync(), ExtractAwaitExpressions()])
+        elif kind == 'generator':
+            transforms.extend([ConvertYieldFroms()])
+        elif kind != 'sync':
+            raise ValueError('kind must be one of: "sync", "async", "generator".')
+
+        if addictional_transformers is not None:
+            transforms.extend(addictional_transformers)
+
+        result = self._extract_by_variant_and_patches(variant=variant, enabled_patches=enabled_patches, addictional_transformers=transforms)
+        self.cache[cache_key] = result
+        return result
 
     @staticmethod
     def clear_spaces_from_source_code(source_code: str) -> str:
@@ -154,9 +220,13 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         return '\n'.join(new_splitted_source_code)
 
 
-    def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None):
-        if context_name in self.cache:
-            return self.cache[context_name]
+    def _extract_by_variant_and_patches(
+        self,
+        *,
+        variant: str,
+        enabled_patches: Set[str],
+        addictional_transformers: Optional[List[NodeTransformer]] = None,
+    ):
         try:
             source_code: str = getsource(self.function)
         except OSError:
@@ -167,19 +237,72 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         original_function = self.function
         transfunction_decorator = None
         decorator_name = self.decorator_name
+        builtin_context_to_variant: Dict[str, str] = {
+            'sync_context': 'sync',
+            'async_context': 'async',
+            'generator_context': 'generator',
+        }
+
+        def _extract_str_constant(node: AST, *, what: str) -> str:
+            if isinstance(node, Constant) and isinstance(node.value, str):
+                return node.value
+            raise WrongMarkerSyntaxError(f'The "{what}" marker expects a string literal.')
+
+        def _extract_str_sequence(node: AST, *, what: str) -> List[str]:
+            if isinstance(node, (ast.List, ast.Tuple)):
+                result: List[str] = []
+                for elt in node.elts:
+                    result.append(_extract_str_constant(elt, what=what))
+                return result
+            raise WrongMarkerSyntaxError(f'The "{what}" marker expects a list/tuple of string literals.')
 
         class RewriteContexts(NodeTransformer):
             def visit_With(self, node: With) -> Optional[Union[AST, List[AST]]]:
-                if len(node.items) == 1:
-                    if isinstance(node.items[0].context_expr, Name):
-                        context_expr = node.items[0].context_expr
-                    elif isinstance(node.items[0].context_expr, Call) and isinstance(node.items[0].context_expr.func, ast.Name):
-                        context_expr = node.items[0].context_expr.func
+                self.generic_visit(node)
+                if len(node.items) != 1:
+                    return node
 
-                    if context_expr.id == context_name:
-                        return cast(List[AST], node.body)
-                    if context_expr.id != context_name and context_expr.id in ('async_context', 'sync_context', 'generator_context'):
+                item = node.items[0]
+                context_expr = item.context_expr
+
+                # Backward-compatible builtin markers: sync_context / async_context / generator_context
+                if isinstance(context_expr, Name) and context_expr.id in builtin_context_to_variant:
+                    marker_variant = builtin_context_to_variant[context_expr.id]
+                    return cast(List[AST], node.body) if marker_variant == variant else None
+                if isinstance(context_expr, Call) and isinstance(context_expr.func, ast.Name) and context_expr.func.id in builtin_context_to_variant:
+                    # Historically treated as a marker too (even though it's not callable at runtime).
+                    marker_variant = builtin_context_to_variant[context_expr.func.id]
+                    return cast(List[AST], node.body) if marker_variant == variant else None
+
+                # New variant marker: with variant_context("name"):
+                if isinstance(context_expr, Call) and isinstance(context_expr.func, ast.Name) and context_expr.func.id == 'variant_context':
+                    if len(context_expr.args) != 1 or context_expr.keywords:
+                        raise WrongMarkerSyntaxError('The "variant_context" marker can be used with only one positional string argument.')
+                    marker_variant = _extract_str_constant(context_expr.args[0], what='variant_context')
+                    return cast(List[AST], node.body) if marker_variant == variant else None
+
+                # New patch marker: with patch_context("name", variants=[...])
+                if isinstance(context_expr, Call) and isinstance(context_expr.func, ast.Name) and context_expr.func.id == 'patch_context':
+                    if len(context_expr.args) != 1:
+                        raise WrongMarkerSyntaxError('The "patch_context" marker requires exactly one positional string argument (patch name).')
+
+                    patch_name = _extract_str_constant(context_expr.args[0], what='patch_context')
+                    allowed_variants: Optional[List[str]] = None
+
+                    for kw in context_expr.keywords:
+                        if kw.arg != 'variants':
+                            raise WrongMarkerSyntaxError('The "patch_context" marker supports only the "variants" keyword argument.')
+                        if kw.value is None or (isinstance(kw.value, Constant) and kw.value.value is None):
+                            allowed_variants = None
+                        else:
+                            allowed_variants = _extract_str_sequence(kw.value, what='patch_context.variants')
+
+                    if patch_name not in enabled_patches:
                         return None
+                    if allowed_variants is not None and variant not in allowed_variants:
+                        return None
+                    return cast(List[AST], node.body)
+
                 return node
 
         class DeleteDecorator(NodeTransformer):
@@ -248,8 +371,6 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                 result,
                 self.base_object,
             )
-
-        self.cache[context_name] = result
 
         return result
 

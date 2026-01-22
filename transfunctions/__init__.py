@@ -7,6 +7,8 @@ from transfunctions.markers import (
     generator_context as generator_context,
     await_it as await_it,
     yield_from_it as yield_from_it,
+    variant_context as variant_context,
+    patch_context as patch_context,
 )
 
 from transfunctions.errors import (
