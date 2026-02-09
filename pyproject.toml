@@ -57,6 +57,11 @@ runner = "pytest"
 [tool.pytest.ini_options]
 markers = ["mypy_testing"]
 
+[tool.ruff]
+lint.ignore = ['E501', 'E712', 'PTH123', 'PTH118', 'PLR2004', 'PTH107', 'SIM105', 'SIM102', 'RET503', 'PLR0912', 'C901']
+lint.select = ["ERA001", "YTT", "ASYNC", "BLE", "B", "A", "COM", "INP", "PIE", "T20", "PT", "RSE", "RET", "SIM", "SLOT", "TID252", "ARG", "PTH", "I", "C90", "N", "E", "W", "D201", "D202", "D419", "F", "PL", "PLE", "PLR", "PLW", "RUF", "TRY201", "TRY400", "TRY401"]
+format.quote-style = "single"
+
 [project.urls]
 'Source' = 'https://github.com/pomponchik/transfunctions'
 'Tracker' = 'https://github.com/pomponchik/transfunctions/issues'
