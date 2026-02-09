@@ -99,12 +99,12 @@ def superfunction(function: Callable[FunctionParams, ReturnType]) -> Callable[Fu
 
 @overload
 def superfunction(
-    *, tilde_syntax: bool = True
+    *, tilde_syntax: bool = True, check_decorators: bool = True
 ) -> Callable[[Callable[FunctionParams, ReturnType]], Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]]: ...
 
 
 def superfunction(  # type: ignore[misc]
-    *args: Callable[FunctionParams, ReturnType], tilde_syntax: bool = True
+    *args: Callable[FunctionParams, ReturnType], tilde_syntax: bool = True, check_decorators: bool = True,
 ) -> Union[
     Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]],
     Callable[[Callable[FunctionParams, ReturnType]], Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]],
@@ -115,6 +115,7 @@ def superfunction(  # type: ignore[misc]
             cast(FrameType, cast(FrameType, currentframe()).f_back).f_lineno,
             "superfunction",
             cast(FrameType, cast(FrameType, currentframe()).f_back),
+            check_decorators,
         )
 
         if not tilde_syntax:

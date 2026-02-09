@@ -40,9 +40,9 @@ from transfunctions.universal_namespace import UniversalNamespaceAroundFunction
 
 class FunctionTransformer(Generic[FunctionParams, ReturnType]):
     def __init__(
-        self, function: Callable[FunctionParams, ReturnType], decorator_lineno: int, decorator_name: str, frame: FrameType,
+        self, function: Callable[FunctionParams, ReturnType], decorator_lineno: int, decorator_name: str, frame: FrameType, check_decorators: bool,
     ) -> None:
-        if isinstance(function, type(self)):
+        if isinstance(function, type(self)) and check_decorators:
             raise DualUseOfDecoratorError(f"You cannot use the '{decorator_name}' decorator twice for the same function.")
         if not isfunction(function):
             raise ValueError(f"Only regular or generator functions can be used as a template for @{decorator_name}.")
@@ -55,6 +55,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         self.decorator_lineno = decorator_lineno
         self.decorator_name = decorator_name
         self.frame = frame
+        self.check_decorators = check_decorators
         self.base_object: Optional[SomeClassInstance] = None  # type: ignore[valid-type]
         self.cache: Dict[str, Callable[FunctionParams, ReturnType]] = {}
 
@@ -177,6 +178,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         original_function = self.function
         transfunction_decorator: Optional[Name] = None
         decorator_name = self.decorator_name
+        check_decorators = self.check_decorators
 
         class RewriteContexts(NodeTransformer):
             def visit_With(self, node: With) -> Optional[Union[AST, List[AST]]]:
@@ -198,7 +200,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                     nonlocal transfunction_decorator
                     transfunction_decorator = None
 
-                    if not node.decorator_list:
+                    if not node.decorator_list and check_decorators:
                         raise WrongDecoratorSyntaxError(f"The @{decorator_name} decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")
 
                     for decorator in node.decorator_list:
@@ -208,6 +210,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                         if (
                             isinstance(decorator, Name)
                             and decorator.id != decorator_name
+                            and check_decorators
                         ):
                             raise WrongDecoratorSyntaxError(f'The @{decorator_name} decorator cannot be used in conjunction with other decorators.')
                         else:
