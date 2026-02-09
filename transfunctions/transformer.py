@@ -244,7 +244,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
         tree = self.wrap_ast_by_closures(tree)
 
-        if version_info.minor > 10:
+        if version_info.minor > 10:  # noqa: YTT204
             increment_lineno(tree, n=(self.decorator_lineno - cast(Name, transfunction_decorator).lineno))
         else:
             increment_lineno(tree, n=(self.decorator_lineno - cast(Name, transfunction_decorator).lineno - 1))
