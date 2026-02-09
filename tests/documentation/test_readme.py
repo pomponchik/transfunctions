@@ -13,13 +13,13 @@ from transfunctions import (
 def test_quick_start():
     @transfunction
     def template():
-        print('so, ', end='')
+        print('so, ', end='')  # noqa: T201
         with sync_context:
-            print("it's just usual function!")
+            print("it's just usual function!")  # noqa: T201
         with async_context:
-            print("it's an async function!")
+            print("it's an async function!")  # noqa: T201
         with generator_context:
-            print("it's a generator function!")
+            print("it's a generator function!")  # noqa: T201
             yield
 
     buffer = io.StringIO()

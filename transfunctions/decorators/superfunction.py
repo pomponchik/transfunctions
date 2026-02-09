@@ -133,7 +133,7 @@ def superfunction(  # type: ignore[misc]
         def wrapper(*args: FunctionParams.args, **kwargs: FunctionParams.kwargs) -> UsageTracer[FunctionParams, ReturnType]:
             return UsageTracer(ParamSpecContainer(*args, **kwargs), transformer, tilde_syntax)
 
-        wrapper.__is_superfunction__ = True
+        wrapper.__is_superfunction__ = True  # type: ignore[attr-defined]
 
         return wrapper
 

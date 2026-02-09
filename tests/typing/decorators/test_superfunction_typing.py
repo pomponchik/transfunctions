@@ -31,7 +31,7 @@ from transfunctions import (
 @pytest.mark.mypy_testing
 def test_superfunction_deduced_return_type_sync() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -43,7 +43,7 @@ def test_superfunction_deduced_return_type_sync() -> None:
 @pytest.mark.mypy_testing
 def test_superfunction_deduced_return_type_async() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -55,7 +55,7 @@ def test_superfunction_deduced_return_type_async() -> None:
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_incorrect_arg_type_sync() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -67,7 +67,7 @@ def test_superfunction_param_spec_fail_on_incorrect_arg_type_sync() -> None:
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_sync() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -79,7 +79,7 @@ def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_sync() -> None:
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_on_correct_args_types_sync() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -91,7 +91,7 @@ def test_superfunction_param_spec_on_correct_args_types_sync() -> None:
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_incorrect_arg_type_async() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -103,7 +103,7 @@ def test_superfunction_param_spec_fail_on_incorrect_arg_type_async() -> None:
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_async() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -115,7 +115,7 @@ def test_superfunction_param_spec_fail_on_incorrect_kwarg_type_async() -> None:
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_on_correct_args_types_async() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -127,7 +127,7 @@ def test_superfunction_param_spec_on_correct_args_types_async() -> None:
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_missing_args_sync() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -141,7 +141,7 @@ def test_superfunction_param_spec_fail_on_missing_args_sync() -> None:
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_args_sync() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -155,7 +155,7 @@ def test_superfunction_param_spec_fail_on_extra_args_sync() -> None:
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_kwargs_sync() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -168,7 +168,7 @@ def test_superfunction_param_spec_fail_on_extra_kwargs_sync() -> None:
 @pytest.mark.mypy_testing
 def test_superfunction_param_spec_fail_on_missing_args_async() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -182,7 +182,7 @@ def test_superfunction_param_spec_fail_on_missing_args_async() -> None:
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_args_async() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -196,7 +196,7 @@ def test_superfunction_param_spec_fail_on_extra_args_async() -> None:
 @pytest.mark.xfail
 def test_superfunction_param_spec_fail_on_extra_kwargs_async() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -210,7 +210,7 @@ def test_superfunction_param_spec_fail_on_extra_kwargs_async() -> None:
 @pytest.mark.xfail  # it shouldn't work because typed_superfunction is a generator function, gut it's not returning a generator object according to it's typing.
 def test_simple_using_of_generator_function_with_simple_yield_from() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -226,7 +226,7 @@ def test_simple_using_of_generator_function_with_simple_yield_from() -> None:
 @pytest.mark.mypy_testing
 def test_wrong_using_of_generator_function_with_simple_yield_from() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -240,7 +240,7 @@ def test_wrong_using_of_generator_function_with_simple_yield_from() -> None:
 @pytest.mark.mypy_testing
 def test_simple_using_of_generator_function_with_yield_from_it_marker_function() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -256,7 +256,7 @@ def test_simple_using_of_generator_function_with_yield_from_it_marker_function()
 @pytest.mark.mypy_testing
 def test_using_of_generator_function_with_yield_from_it_marker_function_with_wrong_return_value() -> None:
     @superfunction
-    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_superfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
