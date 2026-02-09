@@ -6,6 +6,7 @@ test.py
 dist
 venv
 .venv
+venv3
 build
 .ruff_cache
 .mypy_cache
