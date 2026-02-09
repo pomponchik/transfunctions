@@ -207,7 +207,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                     nonlocal transfunction_decorator
                     transfunction_decorator = None
 
-                    if not node.decorator_list and check_decorators:
+                    if (not node.decorator_list) and check_decorators:
                         raise WrongDecoratorSyntaxError(f"The @{decorator_name} decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")
 
                     for decorator in node.decorator_list:
@@ -244,7 +244,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
         tree = self.wrap_ast_by_closures(tree)
 
-        if version_info > (3, 10):
+        if version_info.minor > 10:
             increment_lineno(tree, n=(self.decorator_lineno - cast(Name, transfunction_decorator).lineno))
         else:
             increment_lineno(tree, n=(self.decorator_lineno - cast(Name, transfunction_decorator).lineno - 1))
