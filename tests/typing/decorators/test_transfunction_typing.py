@@ -9,7 +9,7 @@ else:
 
 import pytest
 
-from transfunctions import transfunction, sync_context, async_context
+from transfunctions import async_context, sync_context, transfunction
 
 
 @pytest.mark.mypy_testing

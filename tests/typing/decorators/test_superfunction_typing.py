@@ -1,5 +1,5 @@
-import sys
 import asyncio
+import sys
 from contextlib import suppress
 
 if sys.version_info <= (3, 11):
@@ -9,8 +9,13 @@ else:
 
 import pytest
 
-from transfunctions import superfunction, sync_context, async_context, generator_context, yield_from_it
-
+from transfunctions import (
+    async_context,
+    generator_context,
+    superfunction,
+    sync_context,
+    yield_from_it,
+)
 
 """
 Что нужно проверить:

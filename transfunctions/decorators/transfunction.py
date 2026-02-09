@@ -1,6 +1,6 @@
 from inspect import currentframe
-from typing import cast
 from types import FrameType
+from typing import cast
 
 from transfunctions.transformer import FunctionTransformer
 from transfunctions.typing import Callable, FunctionParams, ReturnType

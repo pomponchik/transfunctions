@@ -3,10 +3,20 @@ import sys
 from asyncio import run
 from contextlib import redirect_stdout
 
-import pytest
 import full_match
+import pytest
 
-from transfunctions import superfunction, sync_context, async_context, generator_context, await_it, yield_from_it, WrongDecoratorSyntaxError, WrongTransfunctionSyntaxError, WrongMarkerSyntaxError
+from transfunctions import (
+    WrongDecoratorSyntaxError,
+    WrongMarkerSyntaxError,
+    WrongTransfunctionSyntaxError,
+    async_context,
+    await_it,
+    generator_context,
+    superfunction,
+    sync_context,
+    yield_from_it,
+)
 
 """
 Что нужно проверить:
@@ -325,7 +335,7 @@ def test_call_superfunction_without_tilde_syntax_whet_it_is_on_by_default():
 
     function()
 
-    assert 'The tilde-syntax is enabled for the "function" function. Call it like this: ~function().' == exception_message
+    assert exception_message == 'The tilde-syntax is enabled for the "function" function. Call it like this: ~function().'
 
     sys.unraisablehook = old_hook
 
@@ -344,7 +354,7 @@ def test_call_superfunction_without_tilde_syntax_whet_it_is_on():
 
     function()
 
-    assert 'The tilde-syntax is enabled for the "function" function. Call it like this: ~function().' == exception_message
+    assert exception_message == 'The tilde-syntax is enabled for the "function" function. Call it like this: ~function().'
 
     sys.unraisablehook = old_hook
 

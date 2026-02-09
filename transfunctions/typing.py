@@ -1,6 +1,6 @@
 import sys
-from typing import TypeVar
 from collections.abc import Iterable
+from typing import TypeVar
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -27,4 +27,4 @@ if sys.version_info >= (3, 9):
 else:
     IterableWithResults = Iterable  # pragma: no cover
 
-__all__ = ('ParamSpec', 'TypeAlias', 'Callable', 'Coroutine', 'Generator', 'ReturnType', 'FunctionParams', 'IterableWithResults', 'SomeClassInstance')
+__all__ = ('Callable', 'Coroutine', 'FunctionParams', 'Generator', 'IterableWithResults', 'ParamSpec', 'ReturnType', 'SomeClassInstance', 'TypeAlias')

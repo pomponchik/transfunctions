@@ -1,5 +1,5 @@
-from typing import Any, NoReturn, Generator
 from contextlib import contextmanager
+from typing import Any, Generator, NoReturn
 
 from transfunctions.typing import IterableWithResults
 

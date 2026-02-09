@@ -1,6 +1,6 @@
-from typing import Dict, Optional, Any
-from types import FrameType
 import builtins
+from types import FrameType
+from typing import Any, Dict, Optional
 
 from transfunctions.typing import Callable, FunctionParams, ReturnType
 

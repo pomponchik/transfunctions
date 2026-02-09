@@ -3,10 +3,10 @@ from asyncio import run
 from contextlib import redirect_stdout
 
 from transfunctions import (
-    transfunction,
-    sync_context,
     async_context,
     generator_context,
+    sync_context,
+    transfunction,
 )
 
 

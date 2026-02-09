@@ -2,14 +2,20 @@ import weakref
 from ast import AST, NodeTransformer, Return
 from functools import wraps
 from inspect import currentframe
-from typing import Any, Dict, Generic, List, Optional, Union, Type, overload, cast
 from types import FrameType, TracebackType
+from typing import Any, Dict, Generic, List, Optional, Type, Union, cast, overload
 
 from displayhooks import not_display
 
 from transfunctions.errors import WrongTransfunctionSyntaxError
 from transfunctions.transformer import FunctionTransformer
-from transfunctions.typing import Callable, Coroutine, ReturnType, FunctionParams, Generator
+from transfunctions.typing import (
+    Callable,
+    Coroutine,
+    FunctionParams,
+    Generator,
+    ReturnType,
+)
 
 
 class ParamSpecContainer(Generic[FunctionParams]):
@@ -79,8 +85,7 @@ class UsageTracer(Generic[FunctionParams, ReturnType], Coroutine[Any, None, Retu
             wrapped_coroutine.close()
             if not tilde_syntax:
                 return transformer.get_usual_function()(*param_spec.args, **param_spec.kwargs)
-            else:
-                raise NotImplementedError(f'The tilde-syntax is enabled for the "{transformer.function.__name__}" function. Call it like this: ~{transformer.function.__name__}().')
+            raise NotImplementedError(f'The tilde-syntax is enabled for the "{transformer.function.__name__}" function. Call it like this: ~{transformer.function.__name__}().')
         return None
 
     @staticmethod
@@ -99,7 +104,7 @@ def superfunction(function: Callable[FunctionParams, ReturnType]) -> Callable[Fu
 
 @overload
 def superfunction(
-    *, tilde_syntax: bool = True, check_decorators: bool = True
+    *, tilde_syntax: bool = True, check_decorators: bool = True,
 ) -> Callable[[Callable[FunctionParams, ReturnType]], Callable[FunctionParams, UsageTracer[FunctionParams, ReturnType]]]: ...
 
 
@@ -128,7 +133,7 @@ def superfunction(  # type: ignore[misc]
         def wrapper(*args: FunctionParams.args, **kwargs: FunctionParams.kwargs) -> UsageTracer[FunctionParams, ReturnType]:
             return UsageTracer(ParamSpecContainer(*args, **kwargs), transformer, tilde_syntax)
 
-        setattr(wrapper, "__is_superfunction__", True)
+        wrapper.__is_superfunction__ = True
 
         return wrapper
 

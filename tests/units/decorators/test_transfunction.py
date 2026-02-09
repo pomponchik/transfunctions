@@ -1,15 +1,24 @@
 import traceback
-from inspect import isfunction, iscoroutinefunction, isgeneratorfunction, getsourcelines
 from asyncio import run
 from contextlib import contextmanager
+from inspect import getsourcelines, iscoroutinefunction, isfunction, isgeneratorfunction
 
-import pytest
 import full_match
+import pytest
 
-from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError, DualUseOfDecoratorError, WrongMarkerSyntaxError
+from transfunctions import (
+    CallTransfunctionDirectlyError,
+    DualUseOfDecoratorError,
+    WrongDecoratorSyntaxError,
+    WrongMarkerSyntaxError,
+    async_context,
+    await_it,
+    generator_context,
+    sync_context,
+    transfunction,
+    yield_from_it,
+)
 from transfunctions.transformer import FunctionTransformer
-from transfunctions import async_context, sync_context, generator_context, yield_from_it, await_it
-
 
 SOME_GLOBAL = 777
 

@@ -7,24 +7,24 @@ from ast import (
     Call,
     Constant,
     FunctionDef,
-    Module,
     Load,
+    Module,
     Name,
     NodeTransformer,
     Pass,
     Return,
     Store,
     With,
+    YieldFrom,
     arguments,
     increment_lineno,
     parse,
-    YieldFrom,
 )
 from functools import update_wrapper, wraps
 from inspect import getfile, getsource, iscoroutinefunction, isfunction
 from sys import version_info
-from types import FunctionType, MethodType, FrameType
-from typing import Any, Dict, Generic, List, Optional, Union, Type, cast
+from types import FrameType, FunctionType, MethodType
+from typing import Any, Dict, Generic, List, Optional, Type, Union, cast
 
 from dill.source import getsource as dill_getsource  # type: ignore[import-untyped]
 
@@ -34,7 +34,14 @@ from transfunctions.errors import (
     WrongDecoratorSyntaxError,
     WrongMarkerSyntaxError,
 )
-from transfunctions.typing import Coroutine, Callable, Generator, FunctionParams, ReturnType, SomeClassInstance
+from transfunctions.typing import (
+    Callable,
+    Coroutine,
+    FunctionParams,
+    Generator,
+    ReturnType,
+    SomeClassInstance,
+)
 from transfunctions.universal_namespace import UniversalNamespaceAroundFunction
 
 
@@ -213,10 +220,9 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                             and check_decorators
                         ):
                             raise WrongDecoratorSyntaxError(f'The @{decorator_name} decorator cannot be used in conjunction with other decorators.')
-                        else:
-                            if transfunction_decorator is not None:
-                                raise DualUseOfDecoratorError(f"You cannot use the @{decorator_name} decorator twice for the same function.")
-                            transfunction_decorator = cast(Name, decorator)
+                        if transfunction_decorator is not None:
+                            raise DualUseOfDecoratorError(f"You cannot use the @{decorator_name} decorator twice for the same function.")
+                        transfunction_decorator = cast(Name, decorator)
 
                     node.decorator_list = []
                 return node
