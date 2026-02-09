@@ -2,7 +2,7 @@
 name: Question or consultation
 about: Ask anything about this project
 title: ''
-labels: guestion
+labels: question
 assignees: pomponchik
 
 ---
