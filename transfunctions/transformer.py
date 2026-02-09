@@ -66,7 +66,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         self.base_object: Optional[SomeClassInstance] = None  # type: ignore[valid-type]
         self.cache: Dict[str, Callable[FunctionParams, ReturnType]] = {}
 
-    def __call__(self, *args: Any, **kwargs: Any) -> None:
+    def __call__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
         raise CallTransfunctionDirectlyError("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")
 
     def __get__(
@@ -90,7 +90,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         original_function = self.function
 
         class ConvertSyncFunctionToAsync(NodeTransformer):
-            def visit_FunctionDef(self, node: FunctionDef) -> Union[FunctionDef, AsyncFunctionDef]:
+            def visit_FunctionDef(self, node: FunctionDef) -> Union[FunctionDef, AsyncFunctionDef]:  # noqa: N802
                 if node.name == original_function.__name__:
                     return AsyncFunctionDef(  # type: ignore[no-any-return, call-overload]
                         name=original_function.__name__,
@@ -105,7 +105,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                 return node
 
         class ExtractAwaitExpressions(NodeTransformer):
-            def visit_Call(self, node: Call) -> Union[Call, Await]:
+            def visit_Call(self, node: Call) -> Union[Call, Await]:  # noqa: N802
                 if isinstance(node.func, Name) and node.func.id == 'await_it':
                     if len(node.args) != 1 or node.keywords:
                         raise WrongMarkerSyntaxError('The "await_it" marker can be used with only one positional argument.')
@@ -132,7 +132,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
     def get_generator_function(self) -> Callable[FunctionParams, Generator[ReturnType, None, None]]:
         class ConvertYieldFroms(NodeTransformer):
-            def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:
+            def visit_Call(self, node: Call) -> Optional[Union[AST, List[AST]]]:  # noqa: N802
                 if isinstance(node.func, Name) and node.func.id == 'yield_from_it':
                     if len(node.args) != 1 or node.keywords:
                         raise WrongMarkerSyntaxError('The "yield_from_it" marker can be used with only one positional argument.')
@@ -188,7 +188,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         check_decorators = self.check_decorators
 
         class RewriteContexts(NodeTransformer):
-            def visit_With(self, node: With) -> Optional[Union[AST, List[AST]]]:
+            def visit_With(self, node: With) -> Optional[Union[AST, List[AST]]]:  # noqa: N802
                 if len(node.items) == 1:
                     if isinstance(node.items[0].context_expr, Name):
                         context_expr = node.items[0].context_expr
@@ -202,7 +202,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
                 return node
 
         class DeleteDecorator(NodeTransformer):
-            def visit_FunctionDef(self, node: FunctionDef) -> Optional[Union[AST, List[AST]]]:
+            def visit_FunctionDef(self, node: FunctionDef) -> Optional[Union[AST, List[AST]]]:  # noqa: N802
                 if node.name == original_function.__name__:
                     nonlocal transfunction_decorator
                     transfunction_decorator = None
@@ -212,7 +212,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
                     for decorator in node.decorator_list:
                         if isinstance(decorator, Call):
-                            decorator = decorator.func
+                            decorator = decorator.func  # noqa: PLW2901
 
                         if (
                             isinstance(decorator, Name)
@@ -244,7 +244,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
         tree = self.wrap_ast_by_closures(tree)
 
-        if version_info.minor > 10:
+        if version_info > (3, 10):
             increment_lineno(tree, n=(self.decorator_lineno - cast(Name, transfunction_decorator).lineno))
         else:
             increment_lineno(tree, n=(self.decorator_lineno - cast(Name, transfunction_decorator).lineno - 1))

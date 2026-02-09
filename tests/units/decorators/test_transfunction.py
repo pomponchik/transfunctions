@@ -651,12 +651,12 @@ def test_write_global_variable_from_async_function_with_arguments():
 def test_write_global_variable_from_generator_function_without_arguments():
     @transfunction
     def make():
-        global SOME_GLOBAL
+        global SOME_GLOBAL  # noqa: PLW0603
         SOME_GLOBAL += 1
         yield None
 
-    global SOME_GLOBAL
-    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    global SOME_GLOBAL  # noqa: PLW0603
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL  # noqa: N806
     function = make.get_generator_function()
     list(function())
 
@@ -668,12 +668,12 @@ def test_write_global_variable_from_generator_function_without_arguments():
 def test_write_global_variable_from_generator_function_with_arguments():
     @transfunction
     def make(number):
-        global SOME_GLOBAL
+        global SOME_GLOBAL  # noqa: PLW0603
         SOME_GLOBAL += number
         yield None
 
-    global SOME_GLOBAL
-    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    global SOME_GLOBAL  # noqa: PLW0603
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL  # noqa: N806
     function = make.get_generator_function()
     list(function(3))
 
@@ -1035,7 +1035,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template():
-        with sync_context:
+        with sync_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 return something
 
@@ -1051,7 +1051,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template(a, b):
-        with sync_context:
+        with sync_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 return something + a + b
 
@@ -1067,7 +1067,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template():
-        with sync_context:
+        with sync_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 return something
 
@@ -1083,7 +1083,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template(a, b):
-        with sync_context:
+        with sync_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 return something + a + b
 
@@ -1099,7 +1099,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template():
-        with async_context:
+        with async_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 return something
 
@@ -1115,7 +1115,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template(a, b):
-        with async_context:
+        with async_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 return something + a + b
 
@@ -1131,7 +1131,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template():
-        with async_context:
+        with async_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 return something
 
@@ -1147,7 +1147,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template(a, b):
-        with async_context:
+        with async_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 return something + a + b
 
@@ -1163,7 +1163,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template():
-        with generator_context:
+        with generator_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 yield something
 
@@ -1179,7 +1179,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template(a, b):
-        with generator_context:
+        with generator_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 yield something + a + b
 
@@ -1195,7 +1195,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template():
-        with generator_context:
+        with generator_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 yield something
 
@@ -1211,7 +1211,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template(a, b):
-        with generator_context:
+        with generator_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 yield something + a + b
 
@@ -1333,7 +1333,7 @@ def test_int_literal_default_value_for_usual_function():
 
 def test_list_literal_default_value_for_usual_function():
     @transfunction
-    def template(number, lst=[]):
+    def template(number, lst=[]):  # noqa: B006
         lst.append(number)
         return lst
 
@@ -1345,7 +1345,7 @@ def test_list_literal_default_value_for_usual_function():
 
 def test_list_literal_default_value_it_the_same_for_all_types_of_functions():
     @transfunction
-    def template(number, lst=[]):
+    def template(number, lst=[]):  # noqa: B006
         lst.append(number)
         with async_context:
             return lst
@@ -1392,7 +1392,7 @@ def test_int_literal_default_value_for_async_function():
 
 def test_list_literal_default_value_for_async_function():
     @transfunction
-    def template(number, lst=[]):
+    def template(number, lst=[]):  # noqa: B006
         lst.append(number)
         return lst
 
@@ -1424,7 +1424,7 @@ def test_int_literal_default_value_for_generator_function():
 
 def test_list_literal_default_value_for_generator_function():
     @transfunction
-    def template(number, lst=[]):
+    def template(number, lst=[]):  # noqa: B006
         lst.append(number)
         yield from lst
 
@@ -1463,7 +1463,7 @@ def test_global_variable_default_value_for_usual_function():
 
 def test_resetted_global_variable_default_value_for_usual_function():
     container = []
-    SOME_GLOBAL = 'kek'
+    SOME_GLOBAL = 'kek'  # noqa: N806
 
     @transfunction
     def template(number=SOME_GLOBAL):
@@ -1498,7 +1498,7 @@ def test_global_variable_default_value_for_async_function():
 
 
 def test_resetted_global_variable_default_value_for_async_function():
-    SOME_GLOBAL = 'kek'
+    SOME_GLOBAL = 'kek'  # noqa: N806
 
     @transfunction
     def template(number=SOME_GLOBAL):
@@ -1532,7 +1532,7 @@ def test_global_variable_default_value_for_generator_function():
 
 
 def test_resetted_global_variable_default_value_for_generator_function():
-    SOME_GLOBAL = 'kek'
+    SOME_GLOBAL = 'kek'  # noqa: N806
 
     @transfunction
     def template(number=SOME_GLOBAL):

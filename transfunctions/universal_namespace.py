@@ -21,9 +21,9 @@ class UniversalNamespaceAroundFunction(Dict[str, Any]):
         frame = self.frame
 
         while frame:
-            locals = frame.f_locals
-            if key in locals:
-                return locals[key]
+            locals_from_frame = frame.f_locals
+            if key in locals_from_frame:
+                return locals_from_frame[key]
             frame = frame.f_back
 
         if key in self.function.__globals__:
