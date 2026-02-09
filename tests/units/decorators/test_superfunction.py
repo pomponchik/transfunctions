@@ -3,8 +3,8 @@ import sys
 from asyncio import run
 from contextlib import redirect_stdout
 
-import full_match
 import pytest
+from full_match import match
 
 from transfunctions import (
     WrongDecoratorSyntaxError,
@@ -39,9 +39,9 @@ def test_just_sync_call_without_breackets():
     @superfunction
     def function():
         with sync_context:
-            print(1)
+            print(1)  # noqa: T201
         with async_context:
-            print(2)
+            print(2)  # noqa: T201
         with generator_context:
             yield from [1, 2, 3]
 
@@ -55,9 +55,9 @@ def test_just_sync_call_without_tilde_syntax():
     @superfunction(tilde_syntax=False)
     def function():
         with sync_context:
-            print(1)
+            print(1)  # noqa: T201
         with async_context:
-            print(2)
+            print(2)  # noqa: T201
         with generator_context:
             yield from [1, 2, 3]
 
@@ -71,9 +71,9 @@ def test_just_sync_call_with_tilde_syntax():
     @superfunction(tilde_syntax=True)
     def function():
         with sync_context:
-            print(1)
+            print(1)  # noqa: T201
         with async_context:
-            print(2)
+            print(2)  # noqa: T201
         with generator_context:
             yield from [1, 2, 3]
 
@@ -87,9 +87,9 @@ def test_just_async_call():
     @superfunction
     def function():
         with sync_context:
-            print(1)
+            print(1)  # noqa: T201
         with async_context:
-            print(2)
+            print(2)  # noqa: T201
         with generator_context:
             yield from [1, 2, 3]
 
@@ -103,9 +103,9 @@ def test_just_generator_iteration():
     @superfunction
     def function():
         with sync_context:
-            print(1)
+            print(1)  # noqa: T201
         with async_context:
-            print(2)
+            print(2)  # noqa: T201
         with generator_context:
             yield from [1, 2, 3]
 
@@ -121,9 +121,9 @@ def test_just_sync_call_with_arguments():
     @superfunction
     def function(a, b):
         with sync_context:
-            print(a)
+            print(a)  # noqa: T201
         with async_context:
-            print(b)
+            print(b)  # noqa: T201
         with generator_context:
             yield from [1, 2, 3]
 
@@ -137,9 +137,9 @@ def test_just_async_call_with_arguments():
     @superfunction
     def function(a, b):
         with sync_context:
-            print(a)
+            print(a)  # noqa: T201
         with async_context:
-            print(b)
+            print(b)  # noqa: T201
         with generator_context:
             yield from [1, 2, 3]
 
@@ -153,9 +153,9 @@ def test_just_generator_with_arguments_iteration():
     @superfunction
     def function(a, b):
         with sync_context:
-            print(a)
+            print(a)  # noqa: T201
         with async_context:
-            print(b)
+            print(b)  # noqa: T201
         with generator_context:
             yield from [a, b, 3]
 
@@ -186,18 +186,18 @@ def test_tilda_syntax_for_function_call_with_arguments():
 def test_tilda_syntax_for_function_call_without_arguments_raise_exception():
     @superfunction
     def function():
-        raise ValueError
+        raise ValueError('some text')
 
-    with pytest.raises(ValueError):
-        ~function() == 124
+    with pytest.raises(ValueError, match=match('some text')):
+        ~function()
 
 
 def test_tilda_syntax_for_function_call_with_arguments_raise_exception():
     @superfunction
-    def function(a, b, c=4, d=3):
-        raise ValueError
+    def function(a, b, c=4, d=3):  # noqa: ARG001
+        raise ValueError('some text')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=match('some text')):
         ~function(2, 3, d=5)
 
 
@@ -278,7 +278,7 @@ def test_combine_with_other_decorator_before():
     def template():
         pass
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @superfunction decorator cannot be used in conjunction with other decorators.')):
+    with pytest.raises(WrongDecoratorSyntaxError, match=match('The @superfunction decorator cannot be used in conjunction with other decorators.')):
         ~template()
 
 
@@ -291,24 +291,24 @@ def test_combine_with_other_decorator_after():
     def template():
         pass
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @superfunction decorator cannot be used in conjunction with other decorators.')):
+    with pytest.raises(WrongDecoratorSyntaxError, match=match('The @superfunction decorator cannot be used in conjunction with other decorators.')):
         ~template()
 
 
 def test_pass_coroutine_function_to_decorator():
-    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction. You can't use async functions.")):
+    with pytest.raises(ValueError, match=match("Only regular or generator functions can be used as a template for @superfunction. You can't use async functions.")):
         @superfunction
         async def function_maker():
             return 4
 
 
 def test_pass_not_function_to_decorator():
-    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction.")):
+    with pytest.raises(ValueError, match=match("Only regular or generator functions can be used as a template for @superfunction.")):
         superfunction(1)
 
 
 def test_try_to_pass_lambda_to_decorator():
-    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @superfunction. Don't use lambdas here.")):
+    with pytest.raises(ValueError, match=match("Only regular or generator functions can be used as a template for @superfunction. Don't use lambdas here.")):
         superfunction(lambda x: x)
 
 
@@ -317,7 +317,7 @@ def test_choose_tilde_syntax_off_and_use_tilde():
     def function():
         pass
 
-    with pytest.raises(NotImplementedError, match=full_match('The syntax with ~ is disabled for this superfunction. Call it with simple breackets.')):
+    with pytest.raises(NotImplementedError, match=match('The syntax with ~ is disabled for this superfunction. Call it with simple breackets.')):
         ~function()
 
 
@@ -360,21 +360,21 @@ def test_call_superfunction_without_tilde_syntax_whet_it_is_on():
 
 
 def test_there_is_exception_if_not_tilde_mode_and_in_function_is_empty_return_in_common_block():
-    with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
+    with pytest.raises(WrongTransfunctionSyntaxError, match=match('A superfunction cannot contain a return statement.')):
         @superfunction(tilde_syntax=False)
         def function():
             return
 
 
 def test_there_is_exception_if_not_tilde_mode_and_in_function_is_return_true_in_common_block():
-    with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
+    with pytest.raises(WrongTransfunctionSyntaxError, match=match('A superfunction cannot contain a return statement.')):
         @superfunction(tilde_syntax=False)
         def function():
             return True
 
 
 def test_there_is_exception_if_not_tilde_mode_and_in_function_is_empty_return_in_sync_block():
-    with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
+    with pytest.raises(WrongTransfunctionSyntaxError, match=match('A superfunction cannot contain a return statement.')):
         @superfunction(tilde_syntax=False)
         def function():
             with sync_context:
@@ -382,7 +382,7 @@ def test_there_is_exception_if_not_tilde_mode_and_in_function_is_empty_return_in
 
 
 def test_there_is_exception_if_not_tilde_mode_and_in_function_is_return_true_in_sync_block():
-    with pytest.raises(WrongTransfunctionSyntaxError, match=full_match('A superfunction cannot contain a return statement.')):
+    with pytest.raises(WrongTransfunctionSyntaxError, match=match('A superfunction cannot contain a return statement.')):
         @superfunction(tilde_syntax=False)
         def function():
             with sync_context:
@@ -475,19 +475,6 @@ def test_yield_from_it_with_function_call():
     assert list(function()) == [1, 2, 3]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 def test_await_it_with_two_arguments():
     async def another_function():
         return None
@@ -497,7 +484,7 @@ def test_await_it_with_two_arguments():
         with async_context:
             return await_it(another_function(), another_function())
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "await_it" marker can be used with only one positional argument.')):
         run(template())
 
 
@@ -507,7 +494,7 @@ def test_await_it_without_arguments():
         with async_context:
             return await_it()
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "await_it" marker can be used with only one positional argument.')):
         run(template())
 
 
@@ -520,7 +507,7 @@ def test_await_it_with_one_usual_and_one_named_arguments():
         with async_context:
             return await_it(another_function(), kek=another_function())
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "await_it" marker can be used with only one positional argument.')):
         run(template())
 
 
@@ -530,7 +517,7 @@ def test_yield_from_it_with_two_arguments():
         with generator_context:
             return yield_from_it([1, 2, 3], [1, 2, 3])
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "yield_from_it" marker can be used with only one positional argument.')):
         list(template())
 
 
@@ -540,7 +527,7 @@ def test_yield_from_it_without_arguments():
         with generator_context:
             return yield_from_it()
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "yield_from_it" marker can be used with only one positional argument.')):
         list(template())
 
 
@@ -550,7 +537,7 @@ def test_yield_from_it_with_one_usual_and_one_named_arguments():
         with generator_context:
             return yield_from_it([1, 2, 3], kek=[1, 2, 3])
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "yield_from_it" marker can be used with only one positional argument.')):
         list(template())
 
 
@@ -572,7 +559,7 @@ def test_int_literal_default_value_for_usual_function_with_tilde():
 
 def test_list_literal_default_value_for_usual_function_with_tilde():
     @superfunction
-    def function(number, lst=[]):
+    def function(number, lst=[]):  # noqa: B006
         lst.append(number)
         return lst
 
@@ -582,7 +569,7 @@ def test_list_literal_default_value_for_usual_function_with_tilde():
 
 def test_list_literal_default_value_it_the_same_for_all_types_of_functions_when_usual_one_is_with_tilde():
     @superfunction
-    def function(number, lst=[]):
+    def function(number, lst=[]):  # noqa: B006
         lst.append(number)
         with async_context:
             return lst
@@ -619,7 +606,7 @@ def test_int_literal_default_value_for_async_function():
 
 def test_list_literal_default_value_for_async_function():
     @superfunction
-    def function(number, lst=[]):
+    def function(number, lst=[]):  # noqa: B006
         lst.append(number)
         return lst
 
@@ -645,7 +632,7 @@ def test_int_literal_default_value_for_generator_function():
 
 def test_list_literal_default_value_for_generator_function():
     @superfunction
-    def function(number, lst=[]):
+    def function(number, lst=[]):  # noqa: B006
         lst.append(number)
         yield from lst
 
@@ -779,15 +766,13 @@ def test_use_decorator_without_at():
     def template():
         pass
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @superfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
-        function = superfunction(template)
+    function = superfunction(template)
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=match("The @superfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
         ~function()
 
-
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @superfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
-        function = superfunction(template)
+    with pytest.raises(WrongDecoratorSyntaxError, match=match("The @superfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
         run(function())
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @superfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
-        function = superfunction(template)
+    with pytest.raises(WrongDecoratorSyntaxError, match=match("The @superfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
         list(function())
