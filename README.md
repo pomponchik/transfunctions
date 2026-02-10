@@ -333,4 +333,4 @@ def my_superfunction():
         yield_from_it([1, 2, 3])
 ```
 
-The keywords yield or yield from are available to you and work perfectly, but from the point of view of a static type checker, they turn the function into a generator, which should also mean a special type annotation. By replacing this fragment with a function call, we hack it.
+The keywords `yield` or `yield from` are available to you and work perfectly, but from the point of view of a static type checker, they turn the function into a generator, which should also mean a special type annotation. By replacing this fragment with a function call, we hack it.
