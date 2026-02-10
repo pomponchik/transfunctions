@@ -92,7 +92,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         class ConvertSyncFunctionToAsync(NodeTransformer):
             def visit_FunctionDef(self, node: FunctionDef) -> Union[FunctionDef, AsyncFunctionDef]:  # noqa: N802
                 if node.name == original_function.__name__:
-                    return AsyncFunctionDef(
+                    return AsyncFunctionDef(  # type: ignore[no-any-return, call-overload, unused-ignore]
                         name=original_function.__name__,
                         args=node.args,
                         body=node.body,
@@ -270,7 +270,7 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
     def wrap_ast_by_closures(self, tree: Module) -> Module:
         old_functiondef = tree.body[0]
 
-        tree.body[0] = FunctionDef(
+        tree.body[0] = FunctionDef(  # type: ignore[call-overload, unused-ignore]
             name='wrapper',
             body=[Assign(targets=[Name(id=name, ctx=Store(), col_offset=0)], value=Constant(value=None, col_offset=0), col_offset=0) for name in self.function.__code__.co_freevars] + [
                 old_functiondef,
