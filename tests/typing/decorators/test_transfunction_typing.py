@@ -9,13 +9,13 @@ else:
 
 import pytest
 
-from transfunctions import transfunction, sync_context, async_context
+from transfunctions import async_context, sync_context, transfunction
 
 
 @pytest.mark.mypy_testing
 def test_transfunction_deduced_return_type_sync():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -28,7 +28,7 @@ def test_transfunction_deduced_return_type_sync():
 @pytest.mark.mypy_testing
 def test_transfunction_deduced_return_type_async():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -40,7 +40,7 @@ def test_transfunction_deduced_return_type_async():
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_fail_on_incorrect_arg_type_sync():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -52,7 +52,7 @@ def test_transfunction_param_spec_fail_on_incorrect_arg_type_sync():
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_fail_on_incorrect_kwarg_type_sync():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -64,7 +64,7 @@ def test_transfunction_param_spec_fail_on_incorrect_kwarg_type_sync():
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_fail_on_missing_args_sync():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -78,7 +78,7 @@ def test_transfunction_param_spec_fail_on_missing_args_sync():
 @pytest.mark.xfail
 def test_transfunction_param_spec_fail_on_extra_args_sync():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -92,7 +92,7 @@ def test_transfunction_param_spec_fail_on_extra_args_sync():
 @pytest.mark.xfail
 def test_transfunction_param_spec_fail_on_extra_kwargs_sync():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -105,7 +105,7 @@ def test_transfunction_param_spec_fail_on_extra_kwargs_sync():
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_on_correct_args_types_sync():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -117,7 +117,7 @@ def test_transfunction_param_spec_on_correct_args_types_sync():
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_fail_on_incorrect_arg_type_async():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -129,7 +129,7 @@ def test_transfunction_param_spec_fail_on_incorrect_arg_type_async():
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_fail_on_incorrect_kwarg_type_async():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -141,7 +141,7 @@ def test_transfunction_param_spec_fail_on_incorrect_kwarg_type_async():
 @pytest.mark.mypy_testing
 def test_transfunction_param_spec_fail_on_missing_args_async():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -154,7 +154,7 @@ def test_transfunction_param_spec_fail_on_missing_args_async():
 @pytest.mark.xfail
 def test_transfunction_param_spec_fail_on_extra_args_async():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -168,7 +168,7 @@ def test_transfunction_param_spec_fail_on_extra_args_async():
 @pytest.mark.xfail
 def test_transfunction_param_spec_fail_on_extra_kwargs_async():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:
@@ -182,7 +182,7 @@ def test_transfunction_param_spec_fail_on_extra_kwargs_async():
 @pytest.mark.xfail
 def test_transfunction_param_spec_on_correct_args_types_async():
     @transfunction
-    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:
+    def typed_transfunction(arg: float, *, kwarg: int = 0) -> int:  # noqa: ARG001
         with sync_context:
             return 1
         with async_context:

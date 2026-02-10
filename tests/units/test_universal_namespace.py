@@ -1,10 +1,9 @@
-from inspect import currentframe
 import builtins
+from inspect import currentframe
 
 import pytest
 
 from transfunctions.universal_namespace import UniversalNamespaceAroundFunction
-
 
 some_global = 321
 

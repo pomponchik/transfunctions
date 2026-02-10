@@ -1,36 +1,50 @@
 name: Lint
 
-on:
-  push
+on: push
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
           python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      shell: bash
-      run: pip install -r requirements_dev.txt
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ github.workflow }}-${{ hashFiles('requirements_dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ github.workflow }}-
 
-    - name: Install the library
-      shell: bash
-      run: pip install .
+      - name: Install dependencies
+        shell: bash
+        run: pip install -r requirements_dev.txt
 
-    - name: Run ruff
-      shell: bash
-      run: ruff check transfunctions
+      - name: Install the library
+        shell: bash
+        run: pip install .
 
-    - name: Run ruff for tests
-      shell: bash
-      run: ruff check tests
+      - name: Run ruff
+        shell: bash
+        run: ruff check transfunctions
+
+      - name: Run ruff for tests
+        shell: bash
+        run: ruff check tests
+
+      - name: Run mypy
+        shell: bash
+        run: mypy --strict transfunctions
+
+      - name: Run mypy for tests
+        shell: bash
+        run: mypy tests --exclude typing

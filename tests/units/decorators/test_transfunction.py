@@ -1,15 +1,24 @@
 import traceback
-from inspect import isfunction, iscoroutinefunction, isgeneratorfunction, getsourcelines
 from asyncio import run
 from contextlib import contextmanager
+from inspect import getsourcelines, iscoroutinefunction, isfunction, isgeneratorfunction
 
 import pytest
-import full_match
+from full_match import match
 
-from transfunctions import transfunction, CallTransfunctionDirectlyError, WrongDecoratorSyntaxError, DualUseOfDecoratorError, WrongMarkerSyntaxError
+from transfunctions import (
+    CallTransfunctionDirectlyError,
+    DualUseOfDecoratorError,
+    WrongDecoratorSyntaxError,
+    WrongMarkerSyntaxError,
+    async_context,
+    await_it,
+    generator_context,
+    sync_context,
+    transfunction,
+    yield_from_it,
+)
 from transfunctions.transformer import FunctionTransformer
-from transfunctions import async_context, sync_context, generator_context, yield_from_it, await_it
-
 
 SOME_GLOBAL = 777
 
@@ -95,7 +104,7 @@ def test_result_is_transformer():
 
 
 @pytest.mark.parametrize(
-    ['args', 'kwargs'],
+    ('args', 'kwargs'),
     [
         ((), {}),
         (('lol', 'kek'), {}),
@@ -108,19 +117,19 @@ def test_direct_call_or_transformer(args, kwargs):
     def function_maker(*args, **kwargs):
         pass
 
-    with pytest.raises(CallTransfunctionDirectlyError, match=full_match("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")):
+    with pytest.raises(CallTransfunctionDirectlyError, match=match("You can't call a transfunction object directly, create a function, a generator function or a coroutine function from it.")):
         function_maker(*args, **kwargs)
 
 
 def test_pass_coroutine_function_to_decorator():
-    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @transfunction. You can't use async functions.")):
+    with pytest.raises(ValueError, match=match("Only regular or generator functions can be used as a template for @transfunction. You can't use async functions.")):
         @transfunction
         async def function_maker():
             return 4
 
 
 def test_pass_not_function_to_decorator():
-    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @transfunction.")):
+    with pytest.raises(ValueError, match=match("Only regular or generator functions can be used as a template for @transfunction.")):
         transfunction(1)
 
 
@@ -187,7 +196,7 @@ def test_create_async_function_with_parameters_without_any_markers():
 
 
 def test_try_to_pass_lambda_to_decorator():
-    with pytest.raises(ValueError, match=full_match("Only regular or generator functions can be used as a template for @transfunction. Don't use lambdas here.")):
+    with pytest.raises(ValueError, match=match("Only regular or generator functions can be used as a template for @transfunction. Don't use lambdas here.")):
         transfunction(lambda x: x)
 
 
@@ -226,7 +235,7 @@ def test_traceback_is_working_in_simple_usual_function():
 
     try:
         function()
-        assert False
+        raise AssertionError
     except ValueError as e:
         certain_traceback = list(traceback.extract_tb(e.__traceback__))
 
@@ -243,7 +252,7 @@ def test_traceback_is_working_in_simple_async_function():
 
     try:
         run(function())
-        assert False
+        raise AssertionError
     except ValueError as e:
         certain_traceback = list(traceback.extract_tb(e.__traceback__))
 
@@ -261,7 +270,7 @@ def test_traceback_is_working_in_simple_generator_function():
 
     try:
         [x for x in function()]
-        assert False
+        raise AssertionError
     except ValueError as e:
         certain_traceback = list(traceback.extract_tb(e.__traceback__))
 
@@ -279,7 +288,7 @@ def test_traceback_is_working_in_usual_function_with_marker():
 
     try:
         function()
-        assert False
+        raise AssertionError
     except ValueError as e:
         certain_traceback = list(traceback.extract_tb(e.__traceback__))
 
@@ -297,7 +306,7 @@ def test_traceback_is_working_in_simple_async_function_with_marker():
 
     try:
         run(function())
-        assert False
+        raise AssertionError
     except ValueError as e:
         certain_traceback = list(traceback.extract_tb(e.__traceback__))
 
@@ -316,7 +325,7 @@ def test_traceback_is_working_in_simple_generator_function_with_marker():
 
     try:
         [x for x in function()]
-        assert False
+        raise AssertionError
     except ValueError as e:
         certain_traceback = list(traceback.extract_tb(e.__traceback__))
 
@@ -332,12 +341,12 @@ def test_try_to_use_transfunction_decorator_without_at_sign():
 
     make = transfunction(function)
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+    with pytest.raises(WrongDecoratorSyntaxError, match=match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
         function = make.get_generator_function()
 
 
 def test_double_use_of_decorator():
-    with pytest.raises(DualUseOfDecoratorError, match=full_match("You cannot use the 'transfunction' decorator twice for the same function.")):
+    with pytest.raises(DualUseOfDecoratorError, match=match("You cannot use the 'transfunction' decorator twice for the same function.")):
         @transfunction
         @transfunction
         def make():
@@ -578,11 +587,11 @@ def test_write_nonlocal_variable_from_generator_function_with_arguments():
 def test_write_global_variable_from_usual_function_without_arguments():
     @transfunction
     def make():
-        global SOME_GLOBAL
+        global SOME_GLOBAL  # noqa: PLW0603
         SOME_GLOBAL += 1
 
-    global SOME_GLOBAL
-    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    global SOME_GLOBAL  # noqa: PLW0603
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL  # noqa: N806
     function = make.get_usual_function()
     function()
 
@@ -594,11 +603,11 @@ def test_write_global_variable_from_usual_function_without_arguments():
 def test_write_global_variable_from_usual_function_with_arguments():
     @transfunction
     def make(number):
-        global SOME_GLOBAL
+        global SOME_GLOBAL  # noqa: PLW0603
         SOME_GLOBAL += number
 
-    global SOME_GLOBAL
-    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    global SOME_GLOBAL  # noqa: PLW0603
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL  # noqa: N806
     function = make.get_usual_function()
     function(3)
 
@@ -610,11 +619,11 @@ def test_write_global_variable_from_usual_function_with_arguments():
 def test_write_global_variable_from_async_function_without_arguments():
     @transfunction
     def make():
-        global SOME_GLOBAL
+        global SOME_GLOBAL  # noqa: PLW0603
         SOME_GLOBAL += 1
 
-    global SOME_GLOBAL
-    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    global SOME_GLOBAL  # noqa: PLW0603
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL  # noqa: N806
     function = make.get_async_function()
     run(function())
 
@@ -626,11 +635,11 @@ def test_write_global_variable_from_async_function_without_arguments():
 def test_write_global_variable_from_async_function_with_arguments():
     @transfunction
     def make(number):
-        global SOME_GLOBAL
+        global SOME_GLOBAL  # noqa: PLW0603
         SOME_GLOBAL += number
 
-    global SOME_GLOBAL
-    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    global SOME_GLOBAL  # noqa: PLW0603
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL  # noqa: N806
     function = make.get_async_function()
     run(function(3))
 
@@ -642,12 +651,12 @@ def test_write_global_variable_from_async_function_with_arguments():
 def test_write_global_variable_from_generator_function_without_arguments():
     @transfunction
     def make():
-        global SOME_GLOBAL
+        global SOME_GLOBAL  # noqa: PLW0603
         SOME_GLOBAL += 1
         yield None
 
-    global SOME_GLOBAL
-    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    global SOME_GLOBAL  # noqa: PLW0603
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL  # noqa: N806
     function = make.get_generator_function()
     list(function())
 
@@ -659,12 +668,12 @@ def test_write_global_variable_from_generator_function_without_arguments():
 def test_write_global_variable_from_generator_function_with_arguments():
     @transfunction
     def make(number):
-        global SOME_GLOBAL
+        global SOME_GLOBAL  # noqa: PLW0603
         SOME_GLOBAL += number
         yield None
 
-    global SOME_GLOBAL
-    SOME_GLOBAL_BEFORE = SOME_GLOBAL
+    global SOME_GLOBAL  # noqa: PLW0603
+    SOME_GLOBAL_BEFORE = SOME_GLOBAL  # noqa: N806
     function = make.get_generator_function()
     list(function(3))
 
@@ -778,7 +787,7 @@ def test_combine_with_other_decorator_before():
     def template():
         pass
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @transfunction decorator cannot be used in conjunction with other decorators.')):
+    with pytest.raises(WrongDecoratorSyntaxError, match=match('The @transfunction decorator cannot be used in conjunction with other decorators.')):
         template.get_usual_function()
 
 
@@ -791,7 +800,7 @@ def test_combine_with_other_decorator_after():
     def template():
         pass
 
-    with pytest.raises(WrongDecoratorSyntaxError, match=full_match('The @transfunction decorator cannot be used in conjunction with other decorators.')):
+    with pytest.raises(WrongDecoratorSyntaxError, match=match('The @transfunction decorator cannot be used in conjunction with other decorators.')):
         template.get_usual_function()
 
 
@@ -1026,7 +1035,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template():
-        with sync_context:
+        with sync_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 return something
 
@@ -1042,7 +1051,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template(a, b):
-        with sync_context:
+        with sync_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 return something + a + b
 
@@ -1058,7 +1067,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template():
-        with sync_context:
+        with sync_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 return something
 
@@ -1074,7 +1083,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template(a, b):
-        with sync_context:
+        with sync_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 return something + a + b
 
@@ -1090,7 +1099,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template():
-        with async_context:
+        with async_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 return something
 
@@ -1106,7 +1115,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template(a, b):
-        with async_context:
+        with async_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 return something + a + b
 
@@ -1122,7 +1131,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template():
-        with async_context:
+        with async_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 return something
 
@@ -1138,7 +1147,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template(a, b):
-        with async_context:
+        with async_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 return something + a + b
 
@@ -1154,7 +1163,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template():
-        with generator_context:
+        with generator_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 yield something
 
@@ -1170,7 +1179,7 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
 
     @transfunction
     def template(a, b):
-        with generator_context:
+        with generator_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
                 yield something + a + b
 
@@ -1186,7 +1195,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template():
-        with generator_context:
+        with generator_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 yield something
 
@@ -1202,7 +1211,7 @@ def test_other_context_managers_into_context_marker_with_not_empty_parentness_ar
 
     @transfunction
     def template(a, b):
-        with generator_context:
+        with generator_context:  # noqa: SIM117
             with context_manager_with_parentnes(4) as something:
                 yield something + a + b
 
@@ -1245,7 +1254,7 @@ def test_await_it_with_two_arguments():
         with async_context:
             return await_it(another_function(), another_function())
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "await_it" marker can be used with only one positional argument.')):
         template.get_async_function()
 
 
@@ -1255,7 +1264,7 @@ def test_await_it_without_arguments():
         with async_context:
             return await_it()
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "await_it" marker can be used with only one positional argument.')):
         template.get_async_function()
 
 
@@ -1268,7 +1277,7 @@ def test_await_it_with_one_usual_and_one_named_arguments():
         with async_context:
             return await_it(another_function(), kek=another_function())
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "await_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "await_it" marker can be used with only one positional argument.')):
         template.get_async_function()
 
 
@@ -1278,7 +1287,7 @@ def test_yield_from_it_with_two_arguments():
         with generator_context:
             return yield_from_it([1, 2, 3], [1, 2, 3])
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "yield_from_it" marker can be used with only one positional argument.')):
         template.get_generator_function()
 
 
@@ -1288,7 +1297,7 @@ def test_yield_from_it_without_arguments():
         with generator_context:
             return yield_from_it()
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "yield_from_it" marker can be used with only one positional argument.')):
         template.get_generator_function()
 
 
@@ -1298,7 +1307,7 @@ def test_yield_from_it_with_one_usual_and_one_named_arguments():
         with generator_context:
             return yield_from_it([1, 2, 3], kek=[1, 2, 3])
 
-    with pytest.raises(WrongMarkerSyntaxError, match=full_match('The "yield_from_it" marker can be used with only one positional argument.')):
+    with pytest.raises(WrongMarkerSyntaxError, match=match('The "yield_from_it" marker can be used with only one positional argument.')):
         template.get_generator_function()
 
 
@@ -1324,7 +1333,7 @@ def test_int_literal_default_value_for_usual_function():
 
 def test_list_literal_default_value_for_usual_function():
     @transfunction
-    def template(number, lst=[]):
+    def template(number, lst=[]):  # noqa: B006
         lst.append(number)
         return lst
 
@@ -1336,7 +1345,7 @@ def test_list_literal_default_value_for_usual_function():
 
 def test_list_literal_default_value_it_the_same_for_all_types_of_functions():
     @transfunction
-    def template(number, lst=[]):
+    def template(number, lst=[]):  # noqa: B006
         lst.append(number)
         with async_context:
             return lst
@@ -1383,7 +1392,7 @@ def test_int_literal_default_value_for_async_function():
 
 def test_list_literal_default_value_for_async_function():
     @transfunction
-    def template(number, lst=[]):
+    def template(number, lst=[]):  # noqa: B006
         lst.append(number)
         return lst
 
@@ -1415,7 +1424,7 @@ def test_int_literal_default_value_for_generator_function():
 
 def test_list_literal_default_value_for_generator_function():
     @transfunction
-    def template(number, lst=[]):
+    def template(number, lst=[]):  # noqa: B006
         lst.append(number)
         yield from lst
 
@@ -1454,7 +1463,7 @@ def test_global_variable_default_value_for_usual_function():
 
 def test_resetted_global_variable_default_value_for_usual_function():
     container = []
-    SOME_GLOBAL = 'kek'
+    SOME_GLOBAL = 'kek'  # noqa: N806
 
     @transfunction
     def template(number=SOME_GLOBAL):
@@ -1489,7 +1498,7 @@ def test_global_variable_default_value_for_async_function():
 
 
 def test_resetted_global_variable_default_value_for_async_function():
-    SOME_GLOBAL = 'kek'
+    SOME_GLOBAL = 'kek'  # noqa: N806
 
     @transfunction
     def template(number=SOME_GLOBAL):
@@ -1523,7 +1532,7 @@ def test_global_variable_default_value_for_generator_function():
 
 
 def test_resetted_global_variable_default_value_for_generator_function():
-    SOME_GLOBAL = 'kek'
+    SOME_GLOBAL = 'kek'  # noqa: N806
 
     @transfunction
     def template(number=SOME_GLOBAL):
@@ -1532,3 +1541,19 @@ def test_resetted_global_variable_default_value_for_generator_function():
     function = template.get_generator_function()
 
     assert list(function()) == ['kek']
+
+
+def test_use_decorator_without_at():
+    def template():
+        pass
+
+    template = transfunction(template)
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        template.get_usual_function()
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        template.get_async_function()
+
+    with pytest.raises(WrongDecoratorSyntaxError, match=match("The @transfunction decorator can only be used with the '@' symbol. Don't use it as a regular function. Also, don't rename it.")):
+        template.get_generator_function()

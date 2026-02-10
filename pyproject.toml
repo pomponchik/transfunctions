@@ -4,15 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transfunctions"
-version = "0.0.8"
-authors = [
-  { name="Evgeniy Blinov", email="zheni-b@yandex.ru" },
-]
+version = "0.0.9"
+authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Say NO to Python fragmentation on sync and async'
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    'displayhooks>=0.0.4',
+    'displayhooks>=0.0.5',
     'dill==0.4.0',
     'typing_extensions ; python_version <= "3.10"',
 ]
@@ -30,6 +28,9 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
+    'Programming Language :: Python :: Free Threading',
+    'Programming Language :: Python :: Free Threading :: 3 - Stable',
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Libraries',
@@ -50,13 +51,16 @@ keywords = [
 "transfunctions" = ["py.typed"]
 
 [tool.mutmut]
-paths_to_mutate="transfunctions"
-runner="pytest"
+paths_to_mutate = "transfunctions"
+runner = "pytest"
 
 [tool.pytest.ini_options]
-markers = [
-    "mypy_testing",
-]
+markers = ["mypy_testing"]
+
+[tool.ruff]
+lint.ignore = ['E501', 'E712', 'PTH123', 'PTH118', 'PLR2004', 'PTH107', 'SIM105', 'SIM102', 'RET503', 'PLR0912', 'C901', 'RUF001']
+lint.select = ["ERA001", "YTT", "ASYNC", "BLE", "B", "A", "COM", "INP", "PIE", "T20", "PT", "RSE", "RET", "SIM", "SLOT", "TID252", "ARG", "PTH", "I", "C90", "N", "E", "W", "D201", "D202", "D419", "F", "PL", "PLE", "PLR", "PLW", "RUF", "TRY201", "TRY400", "TRY401"]
+format.quote-style = "single"
 
 [project.urls]
 'Source' = 'https://github.com/pomponchik/transfunctions'

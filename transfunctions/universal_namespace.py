@@ -1,13 +1,15 @@
-from typing import Dict, Any
-from types import FrameType
 import builtins
+from types import FrameType
+from typing import Any, Dict, Optional
+
+from transfunctions.typing import Callable, FunctionParams, ReturnType
 
 
 class Nothing:
     pass
 
-class UniversalNamespaceAroundFunction(dict):
-    def __init__(self, function, frame: FrameType) -> None:
+class UniversalNamespaceAroundFunction(Dict[str, Any]):
+    def __init__(self, function: Callable[FunctionParams, ReturnType], frame: Optional[FrameType]) -> None:
         self.function = function
         self.frame = frame
         self.results: Dict[str, Any] = {}
@@ -19,9 +21,9 @@ class UniversalNamespaceAroundFunction(dict):
         frame = self.frame
 
         while frame:
-            locals = frame.f_locals
-            if key in locals:
-                return locals[key]
+            locals_from_frame = frame.f_locals
+            if key in locals_from_frame:
+                return locals_from_frame[key]
             frame = frame.f_back
 
         if key in self.function.__globals__:

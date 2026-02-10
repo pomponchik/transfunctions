@@ -1,6 +1,7 @@
+# noqa: A005
 import sys
-from typing import TypeVar
 from collections.abc import Iterable
+from typing import TypeVar
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -20,10 +21,11 @@ else:
 
 ReturnType = TypeVar('ReturnType')
 FunctionParams = ParamSpec('FunctionParams')
+SomeClassInstance = TypeVar('SomeClassInstance')
 
 if sys.version_info >= (3, 9):
     IterableWithResults = Iterable[ReturnType]
 else:
-    IterableWithResults = Iterable
+    IterableWithResults = Iterable  # pragma: no cover
 
-__all__ = ('ParamSpec', 'TypeAlias', 'Callable', 'Coroutine', 'Generator', 'ReturnType', 'FunctionParams', 'IterableWithResults')
+__all__ = ('Callable', 'Coroutine', 'FunctionParams', 'Generator', 'IterableWithResults', 'ParamSpec', 'ReturnType', 'SomeClassInstance', 'TypeAlias')

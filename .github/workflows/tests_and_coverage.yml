@@ -1,49 +1,55 @@
 name: Tests
 
-on:
-  push
+on: push
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
           python-version: ${{ matrix.python-version }}
 
-    - name: Install the library
-      shell: bash
-      run: pip install .
+      - name: Install the library
+        shell: bash
+        run: pip install .
 
-    - name: Install dependencies
-      shell: bash
-      run: pip install -r requirements_dev.txt
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ github.workflow }}-${{ hashFiles('requirements_dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ github.workflow }}-
 
-    - name: Print all libs
-      shell: bash
-      run: pip list
+      - name: Install dependencies
+        shell: bash
+        run: pip install -r requirements_dev.txt
 
-    - name: Run tests and show coverage on the command line
-      run: |
-        coverage run --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=90
-        coverage xml
+      - name: Print all libs
+        shell: bash
+        run: pip list
 
-    - name: Upload coverage to Coveralls
-      if: runner.os == 'Linux'
-      env:
-        COVERALLS_REPO_TOKEN: ${{secrets.COVERALLS_REPO_TOKEN}}
-      uses: coverallsapp/github-action@v2
-      with:
-        format: cobertura
-        file: coverage.xml
+      - name: Run tests and show coverage on the command line
+        run: |
+          coverage run --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=94
+          coverage xml
 
-    - name: Run tests and show the branch coverage on the command line
-      run: coverage run --branch --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=90
+      - name: Upload coverage to Coveralls
+        if: runner.os == 'Linux'
+        env:
+          COVERALLS_REPO_TOKEN: ${{secrets.COVERALLS_REPO_TOKEN}}
+        uses: coverallsapp/github-action@v2
+        with:
+          format: cobertura
+          file: coverage.xml
+
+      - name: Run tests and show the branch coverage on the command line
+        run: coverage run --branch --source=transfunctions --omit="*tests*" -m pytest --cache-clear --assert=plain && coverage report -m --fail-under=94
