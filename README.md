@@ -310,3 +310,22 @@ There are 2 main difficulties in developing typing here:
 - We mix several types of syntax in a single template function, but the static analyzer does not know that this is a template and part of the code will be deleted from here. In its opinion, this is the final function that will continue to be used in your project.
 
 As you can see, typing in Python is not well suited for metaprogramming. However, in this project, almost all the problems with typing turned out to be solved in one way or another. The main reason why this is so is that we mostly *remove* code from functions, but hardly *add* it there during code generation. In other words, we almost never encounter the problem of how to type the *added* code. This makes the solution to most typing problems accessible. However! Unfortunately, we were not able to completely hide all the typing problems under the hood, but you should still be aware of some of them if you use `mypy` or another analyzer.
+
+If you use the keyword `yield from`, you need to call the function `yield_from_it` instead:
+
+```python
+from transfunctions import yield_it
+
+@superfunction
+def my_superfunction():
+    print('so, ', end='')
+    with sync_context:
+        print("it's just usual function!")
+    with async_context:
+        print("it's an async function!")
+    with generator_context:
+        print("it's a generator function!")
+        yield_from_it([1, 2, 3])
+```
+
+The keywords yield or yield from are available to you and work perfectly, but from the point of view of a static type checker, they turn the function into a generator, which should also mean a special type annotation. By replacing this fragment with a function call, we hack it.
