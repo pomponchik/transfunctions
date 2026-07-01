@@ -80,7 +80,7 @@ You can also quickly try out this and other packages without having to install u
 
 ## The problem
 
-Since the `asyncio` module appeared in Python more than 10 years ago, many well-known libraries have gained asynchronous counterparts. A lot of the code in the Python ecosystem has been [duplicated](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself), and you probably know many such examples.
+Since the `asyncio` module appeared in Python more than 10 years ago, many well-known libraries have developed asynchronous counterparts. A lot of the code in the Python ecosystem has been [duplicated](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself), and you probably know many such examples.
 
 The reason for this problem is that the Python community has chosen a syntax-based approach to asynchrony. There are new keywords in the language, such as `async` and `await`. Their use makes the code so-called "[multicolored](https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/)": functions become “red” or “blue”, and depending on the color, the rules for calling them are different. You can only call blue functions from red ones, but not vice versa.
 
@@ -101,7 +101,7 @@ def template():
     print('something')
 ```
 
-Executing this code will actually return to us not a function, but a special object that can *produce* functions:
+Executing this code will actually give us not a function, but a special object that can *produce* functions:
 
 ```python
 print(template)
@@ -126,7 +126,7 @@ run(async_function())
 #> something
 ```
 
-That's more interesting. In fact, we transferred all the contents from the original function to the generated async function. The content itself has not changed in any way, that is, we got a function that would look something like this:
+That's more interesting. In fact, all the contents from the original function are included in the generated async function. The content itself has not changed in any way, that is, we got a function that would look something like this:
 
 ```python
 async def template():
@@ -148,7 +148,7 @@ def template():
         yield
 ```
 
-The `get_usual_function` method will return a function that will contain a common part (the first `print`) and a part highlighted using the context manager as related to ordinary functions. It will look something like this:
+The `get_usual_function` method returns a function that contains a common part (the first `print`) and a part highlighted using the context manager as related to ordinary functions. It will look something like this:
 
 ```python
 def template():
@@ -214,7 +214,7 @@ from transfunctions import (
 )
 ```
 
-Make sure that the generated functions do not include keywords that are not related to this type of function. For example, you cannot generate a regular function using the `get_usual_function` method from such a template:
+Make sure that the generated functions do not include keywords that are not related to this type of function. For example, you cannot generate a regular function from such a template using the `get_usual_function` method:
 
 ```python
 from asyncio import sleep
@@ -224,12 +224,12 @@ def template():
     await_it(sleep(5))
 ```
 
-Regular or generator functions cannot use the `await` keyword, so you will get an exception when you try to generate such a function. The same applies to the `yield` and `yield from` keywords. You cannot use them outside of code blocks that relate *only* to generator functions. Please note that not in all such cases, the `transfunctions` library will offer you an informative exception. Here you'd better rely on your own knowledge of `Python` syntax. However, even if such an exception is provided, it will only be raised when trying to generate a function of the type in which this syntax is inappropriate. At the template definition stage, you won't get an exception telling you that something went wrong, because the code generation here is lazy and the code is not analyzed for correctness in any way before you request it.
+Regular or generator functions cannot use the `await` keyword, so you will get an exception when you try to generate such a function. The same applies to the `yield` and `yield from` keywords. You cannot use them outside of code blocks that relate *only* to generator functions. Please note that not in all such cases, the `transfunctions` library will offer you an informative exception. You'll need to rely on your knowledge of Python syntax in these cases. However, even if such an exception is provided, it will only be raised when trying to generate a function of the type in which this syntax is inappropriate. At the template definition stage, you won't get an exception telling you that something went wrong, because the code generation here is lazy and the code is not analyzed for correctness in any way before you request it.
 
 
 ## Superfunctions
 
-Superfunctions are the most powerful feature of the library. They allow you to completely "put under the hood" all the machinery for selecting the desired type of function based on the template function. The selection is completely automatic.
+Superfunctions are the most powerful feature of the library. They completely hide the machinery for selecting the desired type of function based on the template function. The selection is completely automatic.
 
 Let's take a look at the sample code:
 
@@ -254,7 +254,7 @@ def my_superfunction():
         yield
 ```
 
-With the `@superfunction` decorator, you no longer need to call special methods for code generation. You can use the resulting function right away, and it will behave differently depending on how you use it.
+With the `@superfunction` decorator, the code generation happens automatically. You can use the resulting function right away, and it will behave differently depending on how you use it.
 
 If you use it as a regular function, a regular function will be created "under the hood" based on the template and then called:
 
@@ -283,7 +283,7 @@ list(my_superfunction())
 #> so, it's a generator function!
 ```
 
-How does it work? In fact, `my_superfunction` returns some kind of intermediate object that can behave as a coroutine, a generator, or a regular callable. Depending on how it is handled, it lazily code-generates the desired version of the function from a given template and uses it.
+How does it work? In fact, calling `my_superfunction` gives you an object that can behave as a coroutine, a generator, or a regular callable. Depending on how it is handled, it lazily code-generates the desired version of the function from a given template and uses it.
 
 By default, a superfunction is called as a regular function using tilde syntax, but there is another mode. To enable it, use the appropriate flag in the decorator:
 
@@ -301,7 +301,7 @@ my_superfunction()
 However, it comes with trade-offs. The fact is that this mode uses a special trick with a reference counter, a special mechanism inside the interpreter that cleans up memory. When there is no reference to an object, the interpreter deletes it, and you can link your callback to this process. It is inside such a callback that the contents of your function are actually executed. This imposes some restrictions on you:
 
 - You cannot use the return values from this function in any way. If you try to save the result of a function call to a variable, the reference counter to the returned object will not drop to zero while this variable exists, and accordingly the function will not actually be called.
-- Exceptions will not work normally inside this function. Rather, they can be picked up and intercepted in [`sys.unraisablehook`](https://docs.python.org/3/library/sys.html#sys.unraisablehook), but they will not go up the stack above this function. This is due to a feature of CPython: exceptions that occur inside callbacks for finalizing objects are completely escaped.
+- Exceptions will not work normally inside this function. Rather, they can be picked up and intercepted in [`sys.unraisablehook`](https://docs.python.org/3/library/sys.html#sys.unraisablehook), but they will not go up the stack above this function. This is a CPython limitation: exceptions raised inside object finalizer callbacks can't propagate normally.
 
 This mode is well suited for functions such as logging or sending statistics from your code: simple functions from which no exceptions or return values are expected. In all other cases, I recommend using the tilde syntax.
 
@@ -313,9 +313,9 @@ Typing is the most difficult problem we faced when developing this library. In m
 There are 2 main difficulties in developing typing here:
 
 - Code generation creates code at runtime that is not in the source files of your project. Whereas most type analyzers look at your code statically, at what is actually present in your files.
-- We mix several types of syntax in a single template function, but the static analyzer does not know that this is a template and part of the code will be deleted from here. In its opinion, this is the final function that will continue to be used in your project.
+- We put different syntax blocks in a single template function, but the static analyzer does not know that this is a template and part of the code will be deleted from here. In its opinion, this is the final function that will continue to be used in your project.
 
-As you can see, typing in Python is not well suited for metaprogramming. However, in this project, almost all the problems with typing turned out to be solved in one way or another. The main reason why this is so is that we mostly *remove* code from functions, but hardly *add* it there during code generation. In other words, we almost never encounter the problem of how to type the *added* code. This makes the solution to most typing problems accessible. However, we were not able to completely hide all the typing problems under the hood, but you should still be aware of some of them if you use `mypy` or another analyzer.
+As you can see, typing in Python is not well suited for metaprogramming. However, in this project, almost all the problems with typing turned out to be solved in one way or another. The main reason is that we mostly *remove* code from functions, but hardly *add* it there during code generation. In other words, we almost never encounter the problem of how to type the *added* code. This makes the solution to most typing problems accessible. However, we were not able to completely hide all the typing problems under the hood, but you should still be aware of some of them if you use `mypy` or another analyzer.
 
 If you use the keyword `yield from`, you need to call the function `yield_from_it` instead:
 
