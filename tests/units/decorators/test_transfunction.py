@@ -21,6 +21,7 @@ from transfunctions import (
 from transfunctions.transformer import FunctionTransformer
 
 SOME_GLOBAL = 777
+SOME_GLOBAL_OBJECT = object()
 
 """
 Что нужно проверить:
@@ -462,9 +463,9 @@ def test_read_closures_with_usual_function():
     """
     Generated usual functions preserve read access to closed-over local variables.
 
-    This covers the simple synchronous case where a transfunction template captures a value from its enclosing scope and the regular function produced from it returns that captured value.
+    This covers the simple synchronous case where a transfunction template captures an object from its enclosing scope and the regular function produced from it returns that exact object.
     """
-    nonlocal_variable = 1
+    nonlocal_variable = object()
 
     @transfunction
     def make():
@@ -473,7 +474,7 @@ def test_read_closures_with_usual_function():
 
     function = make.get_usual_function()
 
-    assert function() == 1
+    assert function() is nonlocal_variable
 
 
 def test_read_closures_with_usual_function_with_arguments():
@@ -569,15 +570,15 @@ def test_read_globals_with_usual_function():
     """
     Generated usual functions preserve access to globals read by the template.
 
-    The check converts a parameterless transfunction with get_usual_function() and verifies that the resulting callable returns the module-level value it references.
+    The check converts a parameterless transfunction with get_usual_function() and verifies that the resulting callable returns the exact module-level object it references.
     """
     @transfunction
     def make():
-        return SOME_GLOBAL
+        return SOME_GLOBAL_OBJECT
 
     function = make.get_usual_function()
 
-    assert function() == SOME_GLOBAL
+    assert function() is SOME_GLOBAL_OBJECT
 
 
 def test_read_globals_with_usual_function_with_arguments():
@@ -1162,11 +1163,17 @@ def test_other_context_managers_with_not_empty_parentness_are_working_in_usual_f
     """
     Non-marker context managers with arguments are preserved in usual functions generated from no-argument templates.
 
-    The generated function should execute the context manager normally and return the value bound by its as-target.
+    The generated function should execute the context manager normally, including both enter and exit paths, and return the value bound by its as-target.
     """
+    events = []
+
     @contextmanager
     def context_manager_with_parentnes(c):
-        yield 123 + c
+        events.append('enter')
+        try:
+            yield 123 + c
+        finally:
+            events.append('exit')
 
     @transfunction
     def template():
@@ -1176,6 +1183,7 @@ def test_other_context_managers_with_not_empty_parentness_are_working_in_usual_f
     function = template.get_usual_function()
 
     assert function() == 127
+    assert events == ['enter', 'exit']
 
 
 def test_other_context_managers_with_not_empty_parentness_are_working_in_usual_function_with_arguments():
@@ -1202,11 +1210,17 @@ def test_other_context_managers_with_empty_parentness_are_working_in_async_funct
     """
     Normal context managers called with empty parentheses keep working when a no-argument transfunction is converted to an async function.
 
-    The coroutine should preserve the with-block binding and return the value yielded by the ordinary context manager.
+    The coroutine should preserve the with-block binding, run both context manager paths, and return the value yielded by the ordinary context manager.
     """
+    events = []
+
     @contextmanager
     def context_manager_with_parentnes():
-        yield 123
+        events.append('enter')
+        try:
+            yield 123
+        finally:
+            events.append('exit')
 
     @transfunction
     def template():
@@ -1216,6 +1230,7 @@ def test_other_context_managers_with_empty_parentness_are_working_in_async_funct
     function = template.get_async_function()
 
     assert run(function()) == 123
+    assert events == ['enter', 'exit']
 
 
 def test_other_context_managers_with_empty_parentness_are_working_in_async_function_with_arguments():
@@ -1262,20 +1277,24 @@ def test_other_context_managers_with_not_empty_parentness_are_working_in_async_f
     """
     Generated async functions preserve ordinary context manager calls with their own arguments.
 
-    This checks that a transfunction template containing a non-marker with block can become an async function, pass through the template arguments, and return the value produced inside the context manager when awaited.
+    This checks that a transfunction template containing a non-marker with block can become an async function and pass template arguments into the preserved context manager call when awaited.
     """
+    context_manager_arguments = []
+
     @contextmanager
-    def context_manager_with_parentnes(c):
-        yield 123 + c
+    def context_manager_with_parentnes(a, b):
+        context_manager_arguments.append((a, b))
+        yield 123 + a + b
 
     @transfunction
     def template(a, b):
-        with context_manager_with_parentnes(4) as something:
-            return something + a + b
+        with context_manager_with_parentnes(a, b) as something:
+            return something
 
     function = template.get_async_function()
 
-    assert run(function(1, 2)) == 130
+    assert run(function(1, 2)) == 126
+    assert context_manager_arguments == [(1, 2)]
 
 
 def test_other_context_managers_with_empty_parentness_are_working_in_generator_function_without_arguments():
@@ -1446,21 +1465,29 @@ def test_other_context_managers_into_context_marker_with_empty_parentness_are_wo
     """
     A generated async function preserves a no-argument ordinary context manager nested inside async_context.
 
-    The awaited result should come from the nested manager's yielded value.
+    The awaited result should come from the nested manager's yielded value, and the nested manager should run enter, body, and exit in order.
     """
+    events = []
+
     @contextmanager
     def context_manager_with_parentnes():
-        yield 123
+        events.append('enter')
+        try:
+            yield 123
+        finally:
+            events.append('exit')
 
     @transfunction
     def template():
         with async_context:  # noqa: SIM117
             with context_manager_with_parentnes() as something:
+                events.append('body')
                 return something
 
     function = template.get_async_function()
 
     assert run(function()) == 123
+    assert events == ['enter', 'body', 'exit']
 
 
 def test_other_context_managers_into_context_marker_with_empty_parentness_are_working_in_async_function_with_arguments():
@@ -1918,10 +1945,10 @@ def test_nonlocal_variable_default_value_for_usual_function():
     """
     get_usual_function preserves a default argument value captured from an enclosing local variable.
 
-    Calling the generated usual function without arguments should pass that preserved default into the body.
+    Calling the generated usual function without arguments should pass that exact preserved object into the body.
     """
     container = []
-    variable = 123
+    variable = object()
 
     @transfunction
     def template(number=variable):
@@ -1930,7 +1957,8 @@ def test_nonlocal_variable_default_value_for_usual_function():
     function = template.get_usual_function()
     function()
 
-    assert container == [variable]
+    assert len(container) == 1
+    assert container[0] is variable
 
 
 def test_global_variable_default_value_for_usual_function():
@@ -2006,12 +2034,12 @@ def test_resetted_global_variable_default_value_for_async_function():
     """
     Generated async functions keep a default value evaluated from a local name that shadows a module global.
 
-    Calling the coroutine without an argument should use the local default, not the same-named global.
+    Calling the coroutine without a keyword-only argument should use the local default, not the same-named global or a copied positional default.
     """
     SOME_GLOBAL = 'kek'  # noqa: N806
 
     @transfunction
-    def template(number=SOME_GLOBAL):
+    def template(*, number=SOME_GLOBAL):
         return number
 
     function = template.get_async_function()

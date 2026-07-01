@@ -901,15 +901,18 @@ def test_nonlocal_variable_default_value_for_usual_function_with_tilde():
     """
     A usual superfunction call via tilde preserves a default argument value captured from an enclosing local variable.
 
-    The check calls the generated ordinary function without an explicit argument and expects it to return the value that was in scope when the decorated function was defined.
+    The check rebinds the enclosing name after decoration, then calls the generated ordinary function without an explicit argument and expects the original object to be returned unchanged.
     """
-    variable = 123
+    original_variable = object()
+    variable = original_variable
 
     @superfunction
     def function(number=variable):
         return number
 
-    assert ~function() == variable
+    variable = object()
+
+    assert ~function() is original_variable
 
 
 def test_global_variable_default_value_for_usual_function_with_tilde():
@@ -1063,13 +1066,15 @@ def test_resetted_global_variable_default_value_for_generator_function():
     """
     Generator superfunctions preserve a default value captured from a local variable that shadows a module global.
 
-    The call is made without arguments and then iterated, so the yielded value must come from the original default rather than from a later global-name lookup.
+    The local shadowing name is deleted before iteration, so the yielded value must come from the original default rather than from a later global-name lookup.
     """
     global_variable = 'kek'
 
     @superfunction
     def function(number=global_variable):
         yield number
+
+    del global_variable
 
     assert list(function()) == ['kek']
 

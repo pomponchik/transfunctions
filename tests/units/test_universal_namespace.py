@@ -28,9 +28,9 @@ def test_get_nonlocal():
     """
     Resolve a requested name from the supplied frame's local variables.
 
-    This locks down that lookup can use a caller-local value even when the wrapped function is empty and does not close over that name.
+    This locks down that lookup returns the exact caller-local object even when the wrapped function is empty and does not close over that name.
     """
-    some_nonlocal = 123  # noqa: F841
+    some_nonlocal = object()
 
     def function():
         pass
@@ -39,7 +39,7 @@ def test_get_nonlocal():
 
     namespace = UniversalNamespaceAroundFunction(function, frame)
 
-    assert namespace['some_nonlocal'] == 123
+    assert namespace['some_nonlocal'] is some_nonlocal
 
 
 def test_get_global():
@@ -76,13 +76,14 @@ def test_get_nonlocal_with_name_as_global():
     assert namespace['some_global'] == 123
 
 
-def test_get_builtin():
+def test_get_builtin(monkeypatch):
     """
     Resolves a missing namespace name from Python builtins.
 
     The test uses a temporary unique builtin value so the assertion specifically verifies the final builtin fallback after namespace assignments, frame locals, and function globals do not provide the name.
     """
-    builtins.some_name = 1234
+    builtin_value = object()
+    monkeypatch.setattr(builtins, 'some_name', builtin_value, raising=False)
 
     def function():
         pass
@@ -91,9 +92,7 @@ def test_get_builtin():
 
     namespace = UniversalNamespaceAroundFunction(function, frame)
 
-    assert namespace['some_name'] == 1234
-
-    del builtins.some_name
+    assert namespace['some_name'] is builtin_value
 
 
 def test_get_nonlocal_with_name_as_builtin():
@@ -172,13 +171,13 @@ def test_set_value_with_same_name_as_global():
     assert namespace['some_global'] == 12345
 
 
-def test_set_value_with_same_name_as_builtin():
+def test_set_value_with_same_name_as_builtin(monkeypatch):
     """
     Explicit namespace assignments take precedence over same-named builtins.
 
     The check creates a temporary builtin, assigns a different value under that name in the namespace, and verifies lookup returns the assigned value.
     """
-    builtins.some_builtin = 1234
+    monkeypatch.setattr(builtins, 'some_builtin', 1234, raising=False)
 
     def function():
         pass
@@ -190,5 +189,3 @@ def test_set_value_with_same_name_as_builtin():
     namespace['some_builtin'] = 12345
 
     assert namespace['some_builtin'] == 12345
-
-    del builtins.some_builtin
