@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transfunctions"
-version = "0.0.12"
+version = "0.0.13"
 authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Say NO to Python fragmentation on sync and async'
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    'displayhooks>=0.0.6',
-    'getsources>=0.0.3',
+    'displayhooks>=0.0.7',
+    'getsources>=0.0.4',
     'typing_extensions ; python_version <= "3.10"',
 ]
 classifiers = [
@@ -36,6 +36,7 @@ classifiers = [
     'Topic :: Software Development :: Libraries',
     'Topic :: Software Development :: Code Generators',
     'Framework :: AsyncIO',
+    'Typing :: Typed',
 ]
 keywords = [
     'async',

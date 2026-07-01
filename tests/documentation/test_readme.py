@@ -11,6 +11,11 @@ from transfunctions import (
 
 
 def test_quick_start():
+    """
+    Ensure a decorated template generates usual, async, and generator callables that share common code and retain only their matching marker block.
+
+    Each generated callable is executed in the way required for its type, including awaiting the async function and iterating the generator, and stdout is checked for the common prefix plus the type-specific message.
+    """
     @transfunction
     def template():
         print('so, ', end='')  # noqa: T201
