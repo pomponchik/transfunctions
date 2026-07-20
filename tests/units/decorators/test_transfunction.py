@@ -1,7 +1,19 @@
+import gc
 import traceback
+import weakref
 from asyncio import run
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from inspect import getsourcelines, iscoroutinefunction, isfunction, isgeneratorfunction
+from inspect import (
+    getsourcelines,
+    iscoroutinefunction,
+    isfunction,
+    isgeneratorfunction,
+    signature,
+    unwrap,
+)
+from threading import Barrier
+from types import MethodType
 
 import pytest
 from full_match import match
@@ -1021,6 +1033,400 @@ def test_it_works_with_simple_generator_method_with_parameters():
 
     assert isinstance(some_class_instance.template, FunctionTransformer)
     assert list(some_class_instance.template.get_generator_function()(2)) == [9]
+
+
+def test_generated_usual_method_is_bound_to_the_current_instance():
+    """
+    A usual method must stay bound to the instance through which it was requested, even when another instance reuses the same context cache.
+
+    The assertions inspect each method's __self__ attribute and return value, exercising the usual-function cache entry independently of the async and generator entries.
+    """
+    class Item:
+        def __init__(self, value):
+            self.value = value
+
+        @transfunction
+        def read(self):
+            return self.value
+
+    first = Item('first')
+    second = Item('second')
+
+    first_method = first.read.get_usual_function()
+    second_method = second.read.get_usual_function()
+
+    assert first_method.__self__ is first
+    assert second_method.__self__ is second
+    assert first_method() == 'first'
+    assert second_method() == 'second'
+
+
+def test_generated_async_method_is_bound_to_the_current_instance():
+    """
+    An async method must stay bound to the instance through which it was requested, even when another instance reuses the same context cache.
+
+    The assertions inspect each method's __self__ attribute and the value returned by its coroutine, exercising the async-function cache entry independently of the usual and generator entries.
+    """
+    class Item:
+        def __init__(self, value):
+            self.value = value
+
+        @transfunction
+        def read(self):
+            return self.value
+
+    first = Item('first')
+    second = Item('second')
+
+    first_method = first.read.get_async_function()
+    second_method = second.read.get_async_function()
+
+    assert first_method.__self__ is first
+    assert second_method.__self__ is second
+    assert run(first_method()) == 'first'
+    assert run(second_method()) == 'second'
+
+
+def test_generated_generator_method_is_bound_to_the_current_instance():
+    """
+    A generator method must stay bound to the instance through which it was requested, even when another instance reuses the same context cache.
+
+    The assertions inspect each method's __self__ attribute and yielded value, exercising the generator-function cache entry independently of the usual and async entries.
+    """
+    class Item:
+        def __init__(self, value):
+            self.value = value
+
+        @transfunction
+        def read(self):
+            yield self.value
+
+    first = Item('first')
+    second = Item('second')
+
+    first_method = first.read.get_generator_function()
+    second_method = second.read.get_generator_function()
+
+    assert first_method.__self__ is first
+    assert second_method.__self__ is second
+    assert list(first_method()) == ['first']
+    assert list(second_method()) == ['second']
+
+
+def test_saved_transfunction_views_remain_bound_to_their_instances():
+    """
+    A transformer view saved from one instance must keep that receiver after the descriptor is accessed through a second instance.
+
+    Both views are saved before method generation, and the second view populates the usual-function cache first. The test then checks each generated method's __self__ and return value to prove that both saved views retain their own receivers.
+    """
+    class Item:
+        def __init__(self, value):
+            self.value = value
+
+        @transfunction
+        def read(self):
+            return self.value
+
+    first = Item('first')
+    second = Item('second')
+    first_view = first.read
+    second_view = second.read
+
+    second_method = second_view.get_usual_function()
+    first_method = first_view.get_usual_function()
+
+    assert first_method.__self__ is first
+    assert second_method.__self__ is second
+    assert first_method() == 'first'
+    assert second_method() == 'second'
+
+
+def test_class_access_remains_unbound_after_instance_access():
+    """
+    Class access must return the original transformer and expose an unbound usual function after an instance has populated the shared context cache.
+
+    The class-level function is called with each instance explicitly and must return that instance's value. The test also checks that methods obtained before and after class access have the corresponding __self__ values and share the same unbound function through __func__.
+    """
+    class Item:
+        def __init__(self, value):
+            self.value = value
+
+        @transfunction
+        def read(self):
+            return self.value
+
+    first = Item('first')
+    second = Item('second')
+
+    first_method = first.read.get_usual_function()
+    unbound_function = Item.read.get_usual_function()
+    second_method = second.read.get_usual_function()
+
+    assert Item.read is Item.__dict__['read']
+    assert unbound_function(first) == 'first'
+    assert unbound_function(second) == 'second'
+    assert first_method.__self__ is first
+    assert second_method.__self__ is second
+    assert first_method.__func__ is unbound_function
+    assert second_method.__func__ is unbound_function
+
+
+def test_class_cache_does_not_retain_instance():
+    """
+    The class descriptor and its shared generated-function cache must not retain an instance after the last bound method referencing it is discarded.
+
+    After deleting the direct instance reference, the test confirms that the saved bound method still retains the receiver as bound_method.__self__. It then deletes the method, forces garbage collection, and expects the weak reference to clear while the class descriptor retains its identity.
+    """
+    class Item:
+        @transfunction
+        def read(self):
+            return self
+
+    item = Item()
+    item_weakref = weakref.ref(item)
+    class_descriptor = Item.__dict__['read']
+    bound_method = item.read.get_usual_function()
+
+    assert bound_method() is item
+
+    del item
+
+    assert item_weakref() is bound_method.__self__
+
+    del bound_method
+    gc.collect()
+
+    assert item_weakref() is None
+    assert Item.__dict__['read'] is class_descriptor
+
+
+def test_extract_context_binds_class_cached_function_to_each_instance():
+    """
+    Direct context extraction must bind a class-cached function independently to every requesting instance.
+
+    The class populates the sync-context cache first, after which two instances call extract_context directly. The assertions distinguish the unbound cached function from both bound methods and verify their receivers and results.
+    """
+    class Item:
+        def __init__(self, value):
+            self.value = value
+
+        @transfunction
+        def read(self):
+            return self.value
+
+    first = Item('first')
+    second = Item('second')
+
+    unbound_function = Item.read.extract_context('sync_context')
+    first_method = first.read.extract_context('sync_context')
+    second_method = second.read.extract_context('sync_context')
+
+    assert isfunction(unbound_function)
+    assert unbound_function(first) == 'first'
+    assert unbound_function(second) == 'second'
+    assert isinstance(first_method, MethodType)
+    assert isinstance(second_method, MethodType)
+    assert first_method.__self__ is first
+    assert second_method.__self__ is second
+    assert first_method() == 'first'
+    assert second_method() == 'second'
+    assert first_method.__func__ is unbound_function
+    assert second_method.__func__ is unbound_function
+
+
+def test_inherited_method_accessed_through_super_is_bound_to_child_instance():
+    """
+    An inherited transfunction requested through super must bind to the child instance selected by descriptor lookup.
+
+    A base instance populates the shared cache before the child requests the same descriptor through super. The test verifies class-level descriptor identity, each method's receiver and result, and their shared unbound function.
+    """
+    class BaseItem:
+        def __init__(self, value):
+            self.value = value
+
+        @transfunction
+        def read(self):
+            return self.value
+
+    class ChildItem(BaseItem):
+        def get_parent_read(self):
+            return super().read.get_usual_function()
+
+    base_instance = BaseItem('base')
+    child_instance = ChildItem('child')
+    class_descriptor = BaseItem.__dict__['read']
+
+    base_method = base_instance.read.get_usual_function()
+    child_method = child_instance.get_parent_read()
+
+    assert BaseItem.read is class_descriptor
+    assert ChildItem.read is class_descriptor
+    assert base_method.__self__ is base_instance
+    assert child_method.__self__ is child_instance
+    assert base_method() == 'base'
+    assert child_method() == 'child'
+    assert base_method.__func__ is child_method.__func__
+
+
+def test_concurrent_method_generation_keeps_each_instance_binding():
+    """
+    Concurrent method requests must preserve the receiver belonging to each saved transformer view.
+
+    Two workers save views for different instances before a barrier releases their requests against an initially empty cache. Each request may populate or reuse the cache; in either case, its method must retain the corresponding receiver, while the function eventually stored in the class cache remains unbound and usable with either instance.
+    """
+    class Item:
+        def __init__(self, value):
+            self.value = value
+
+        @transfunction
+        def read(self):
+            return self.value
+
+    first = Item('first')
+    second = Item('second')
+    barrier = Barrier(2)
+
+    def generate_method(item):
+        transformer_view = item.read
+        barrier.wait(timeout=10)
+        return transformer_view.get_usual_function()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first_future = executor.submit(generate_method, first)
+        second_future = executor.submit(generate_method, second)
+        first_method = first_future.result(timeout=10)
+        second_method = second_future.result(timeout=10)
+
+    assert isinstance(first_method, MethodType)
+    assert isinstance(second_method, MethodType)
+    assert first_method.__self__ is first
+    assert second_method.__self__ is second
+    assert first_method() == 'first'
+    assert second_method() == 'second'
+
+    unbound_function = Item.read.get_usual_function()
+
+    assert isfunction(unbound_function)
+    assert unbound_function(first) == 'first'
+    assert unbound_function(second) == 'second'
+
+
+def test_instance_is_collected_despite_saved_view_and_bound_method_cycles():
+    """
+    Cycles through a saved transformer view and its bound method must not make an instance permanently reachable from the class.
+
+    The instance stores both objects on itself, forming cycles through their receiver references. After the sole external strong reference is deleted, garbage collection must clear the weak reference without removing the class descriptor.
+    """
+    class Item:
+        def __init__(self):
+            self.saved_view = self.read
+            self.bound_method = self.saved_view.get_usual_function()
+
+        @transfunction
+        def read(self):
+            return self
+
+    item = Item()
+    item_weakref = weakref.ref(item)
+    class_descriptor = Item.__dict__['read']
+
+    assert item.saved_view.base_object is item
+    assert item.bound_method.__self__ is item
+    assert item.bound_method() is item
+
+    del item
+
+    assert item_weakref() is not None
+
+    gc.collect()
+
+    assert item_weakref() is None
+    assert Item.__dict__['read'] is class_descriptor
+
+
+def test_method_binding_supports_slotted_unhashable_instances_without_weakref_support():
+    """
+    Method binding must support slotted, unhashable instances that cannot be weakly referenced.
+
+    One class combines all three restrictions before two instances populate and reuse the shared cache. The test confirms those restrictions explicitly and then verifies each generated method's receiver and result.
+    """
+    class Item:
+        __slots__ = ('value',)
+        __hash__ = None
+
+        def __init__(self, value):
+            self.value = value
+
+        @transfunction
+        def read(self):
+            return self.value
+
+    first = Item('first')
+    second = Item('second')
+
+    assert not hasattr(first, '__dict__')
+    with pytest.raises(TypeError):
+        hash(first)
+    with pytest.raises(TypeError):
+        weakref.ref(first)
+
+    first_method = first.read.get_usual_function()
+    second_method = second.read.get_usual_function()
+
+    assert first_method.__self__ is first
+    assert second_method.__self__ is second
+    assert first_method() == 'first'
+    assert second_method() == 'second'
+
+
+@pytest.mark.parametrize(
+    ('function_getter_name', 'function_inspector'),
+    [
+        ('get_usual_function', isfunction),
+        ('get_async_function', iscoroutinefunction),
+        ('get_generator_function', isgeneratorfunction),
+    ],
+)
+def test_generated_method_preserves_signature_and_metadata(function_getter_name, function_inspector):
+    """
+    Every generated method variant must preserve the expected public and underlying signatures and the template's wrapper metadata after class-first cache population.
+
+    The parameterized getter first creates an unbound function through the class, then requests its bound counterpart through an instance. The assertions verify the unbound callable kind, compare the public and underlying signatures with the corresponding original callables, check the bound receiver, and confirm that both generated callables retain the template's metadata and wrapper target.
+    """
+    class Item:
+        @transfunction
+        def calculate(self, value: int = 1, *, multiplier: int = 2):
+            """Return the value multiplied by the requested factor."""
+            with sync_context:
+                return value * multiplier
+            with async_context:
+                return value * multiplier
+            with generator_context:
+                yield value * multiplier
+
+    item = Item()
+    original_function = Item.__dict__['calculate'].function
+    original_bound_method = original_function.__get__(item, Item)
+
+    unbound_function = getattr(Item.calculate, function_getter_name)()
+    bound_method = getattr(item.calculate, function_getter_name)()
+
+    assert function_inspector(unbound_function)
+    assert signature(unbound_function) == signature(original_function)
+    assert signature(unbound_function, follow_wrapped=False) == signature(original_function, follow_wrapped=False)
+    assert isinstance(bound_method, MethodType)
+    assert bound_method.__self__ is item
+    assert signature(bound_method) == signature(original_bound_method)
+    assert signature(bound_method, follow_wrapped=False) == signature(original_bound_method, follow_wrapped=False)
+
+    for generated_callable in (unbound_function, bound_method):
+        assert generated_callable.__name__ == original_function.__name__
+        assert generated_callable.__qualname__ == original_function.__qualname__
+        assert generated_callable.__module__ == original_function.__module__
+        assert generated_callable.__doc__ == original_function.__doc__
+        assert generated_callable.__annotations__ == original_function.__annotations__
+        assert generated_callable.__wrapped__ is original_function
+        assert unwrap(generated_callable) is original_function
 
 
 def test_combine_with_other_decorator_before():
