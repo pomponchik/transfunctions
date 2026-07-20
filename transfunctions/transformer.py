@@ -163,15 +163,15 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
     def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[FunctionParams, Union[Coroutine[Any, Any, ReturnType], Generator[ReturnType, None, None], ReturnType]]:
         if context_name in self.cache:
-            result = self.cache[context_name]
+            cached_result = self.cache[context_name]
 
             if self.base_object is not None:
-                result = MethodType(
-                    result,
+                cached_result = MethodType(
+                    cached_result,
                     self.base_object,
                 )
 
-            return result
+            return cached_result
 
         source_code: str = getclearsource(self.function)
         tree = parse(source_code)
