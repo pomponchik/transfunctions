@@ -20,6 +20,7 @@ from ast import (
     increment_lineno,
     parse,
 )
+from copy import copy
 from functools import update_wrapper, wraps
 from inspect import getfile, iscoroutinefunction, isfunction
 from sys import version_info
@@ -71,11 +72,15 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
     def __get__(
         self,
-        base_object: SomeClassInstance,
+        base_object: Optional[SomeClassInstance],
         owner: Type[SomeClassInstance],
     ) -> 'FunctionTransformer[FunctionParams, ReturnType]':
-        self.base_object = base_object
-        return self
+        if base_object is None:
+            return self
+
+        bound_transformer = copy(self)
+        bound_transformer.base_object = base_object
+        return bound_transformer
 
     @staticmethod
     def is_lambda(function: Callable[FunctionParams, ReturnType]) -> bool:
@@ -158,7 +163,15 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
 
     def extract_context(self, context_name: str, addictional_transformers: Optional[List[NodeTransformer]] = None) -> Callable[FunctionParams, Union[Coroutine[Any, Any, ReturnType], Generator[ReturnType, None, None], ReturnType]]:
         if context_name in self.cache:
-            return self.cache[context_name]
+            result = self.cache[context_name]
+
+            if self.base_object is not None:
+                result = MethodType(
+                    result,
+                    self.base_object,
+                )
+
+            return result
 
         source_code: str = getclearsource(self.function)
         tree = parse(source_code)
@@ -237,13 +250,13 @@ class FunctionTransformer(Generic[FunctionParams, ReturnType]):
         result = self.rewrite_globals_and_closure(result)
         result = wraps(self.function)(result)
 
+        self.cache[context_name] = result
+
         if self.base_object is not None:
             result = MethodType(
                 result,
                 self.base_object,
             )
-
-        self.cache[context_name] = result
 
         return result  # type: ignore[no-any-return]
 
